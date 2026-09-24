@@ -1,0 +1,102 @@
+{
+  "appearance": {
+    "absoluteMagnitude": -0.6,
+    "albedo": [
+      0.106,
+      0.106,
+      0.106
+    ],
+    "albedoScale": 1,
+    "photometry": {
+      "model": "lambert",
+      "version": "1"
+    },
+    "presentation": "ellipsoid",
+    "textureID": "mercury-2k"
+  },
+  "assets": [
+    {
+      "byteLimit": 872555,
+      "format": "jpeg",
+      "height": 1024,
+      "id": "mercury-2k",
+      "path": "texture.jpg",
+      "required": false,
+      "sha256": "5a5c80607f643496bac9a631e71957def35ed788895f18b678ac849c2b38e48a",
+      "width": 2048
+    }
+  ],
+  "capabilities": {
+    "enhances": [],
+    "requires": [
+      "kepler-standish-table2a/1",
+      "iau-linear/1",
+      "lambert/1"
+    ]
+  },
+  "displayName": "Mercury",
+  "equatorialRadiusM": 2440530.0,
+  "gravitationalParameterM3S2": 22032000000000.0,
+  "id": "mercury",
+  "kind": "body",
+  "orbit": {
+    "angleUnit": "deg",
+    "distanceUnit": "au",
+    "elements": {
+      "eccentricity": 0.20563661,
+      "inclinationDeg": 7.00559432,
+      "longitudeOfAscendingNodeDeg": 48.33961819,
+      "longitudeOfPerihelionDeg": 77.45771895,
+      "meanLongitudeDeg": 252.25166724,
+      "rateEccentricity": 2.123e-05,
+      "rateInclination": -0.00590158,
+      "rateMeanLongitude": 149472.67486623,
+      "rateNode": -0.12214182,
+      "ratePerihelion": 0.15940013,
+      "rateSemiMajorAxis": 0.0,
+      "semiMajorAxisAU": 0.38709843
+    },
+    "epochJD": 2451545.0,
+    "frame": "ecliptic-j2000",
+    "model": "kepler-standish-table2a",
+    "timeConvention": "tt-as-utc",
+    "validityEndJD": 2816795.0,
+    "validityStartJD": 625295.0,
+    "version": "1"
+  },
+  "parent": "sun",
+  "polarRadiusM": 2438260.0,
+  "provenance": {
+    "accuracy": "Standish Table 2a fit errors for Mercury over 3000 BC-AD 3000, per JPL approx_pos.html's nominal-error table: about 20 arcsec in heliocentric longitude, 15 arcsec in latitude, and on the order of 1000 km in distance. Table 2b corrections apply only to Jupiter through Neptune and are not needed for Mercury. Rotation is the secular linear IAU model only (BODY199_POLE_RA/POLE_DEC/PM secular terms, quadratic terms are 0). The PCK's BODY199_NUT_PREC_PM periodic libration terms are omitted per the app's iau-linear model - five harmonics tied to Mercury's 3:2 spin-orbit resonance with amplitudes 0.01067257, -0.00112309, -0.00011040, -0.00002539, -0.00000571 degrees. Their sum (~0.0119 deg, ~43 arcsec) bounds the resulting prime-meridian longitude error, roughly 450-500 m of surface displacement at the equator at worst case; the dominant single term (0.01067257 deg, ~38 arcsec, ~450 m) accounts for nearly all of it. The albedo triple [0.106, 0.106, 0.106] is a flat split of the single published scalar geometric albedo (0.106) across the three channels, not a per-channel measurement; the shipped Mars record does the same. The texture is a colour map, not a photometric measurement, and does not carry the albedo: the flat albedo above is what the Lambert model scales. Both ellipsoid axes are the pck00011.tpc BODY199_RADII triple (2440.53, 2440.53, 2438.26 km), one source for the whole ellipsoid; the NSSDC fact sheet's 2438.3 km polar radius is not mixed in.",
+    "attribution": "JPL Solar System Dynamics (orbit elements, V(1,0), geometric albedo); NAIF / IAU Working Group (equatorial and polar radii, and rotation, via pck00011.tpc current BODY199_RADII and BODY199 orientation values); NSSDC Mercury Fact Sheet (GM); Solar System Scope / INOVE (texture).",
+    "coverage": "Heliocentric Mercury over 3000 BC to AD 3000 for the orbit model; rotation model validity window matched to the same span for catalogue consistency. The mercury-2k texture ships with the app; the record falls back to a flat albedo if it is ever absent.",
+    "licence": "Public domain (US government ephemeris and physical facts). Mercury texture CC BY 4.0, quoted from the source page: \"Distributed under Attribution 4.0 International license: You may use, adapt, and share these textures for any purpose, even commercially.\"",
+    "modelVersion": "Standish Table 2a (3000 BC-AD 3000) via JPL approximate positions; NAIF pck00011.tpc current BODY199 secular orientation values (2009 IAU-report-derived, current revision).",
+    "sources": [
+      "https://ssd.jpl.nasa.gov/planets/phys_par.html",
+      "https://nssdc.gsfc.nasa.gov/planetary/factsheet/mercuryfact.html",
+      "https://ssd.jpl.nasa.gov/planets/approx_pos.html",
+      "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/pck00011.tpc",
+      "https://www.solarsystemscope.com/textures/"
+    ]
+  },
+  "rotation": {
+    "angleUnit": "deg",
+    "coefficients": {
+      "poleDeclination": 61.4155,
+      "poleRateDec": -0.0049,
+      "poleRateRA": -0.0328,
+      "poleRightAscension": 281.0103,
+      "primeMeridian": 329.5988,
+      "rotationRate": 6.1385108
+    },
+    "epochJD": 2451545.0,
+    "frame": "equatorial-j2000",
+    "model": "iau-linear",
+    "timeConvention": "tt-as-utc",
+    "validityEndJD": 2816795.0,
+    "validityStartJD": 625295.0,
+    "version": "1"
+  },
+  "tier": "major"
+}

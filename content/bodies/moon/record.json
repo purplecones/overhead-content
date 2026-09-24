@@ -1,0 +1,74 @@
+{
+  "appearance": {
+    "absoluteMagnitude": 0.28,
+    "albedo": [
+      0.12,
+      0.12,
+      0.12
+    ],
+    "albedoScale": 0.24,
+    "photometry": {
+      "model": "lunar",
+      "version": "1"
+    },
+    "presentation": "sphere",
+    "textureID": "moon-lroc"
+  },
+  "assets": [
+    {
+      "byteLimit": 457942,
+      "format": "jpeg",
+      "height": 1024,
+      "id": "moon-lroc",
+      "path": "texture.jpg",
+      "required": true,
+      "sha256": "f7130a1822681fa7512d7dcfd40db8c10b9ba4f06777910348698260ed7a2170",
+      "width": 2048
+    }
+  ],
+  "capabilities": {
+    "requires": [
+      "legacy-lunar-schlyter/1",
+      "legacy-lunar-libration/1",
+      "lunar/1"
+    ]
+  },
+  "displayName": "Moon",
+  "equatorialRadiusM": 1737400,
+  "gravitationalParameterM3S2": 4902800000000,
+  "id": "moon",
+  "kind": "body",
+  "orbit": {
+    "epochJD": 2451545,
+    "frame": "earth-fixed",
+    "model": "legacy-lunar-schlyter",
+    "timeConvention": "tt-as-utc",
+    "validityEndJD": 2488069.5,
+    "validityStartJD": 2415020.5,
+    "version": "1"
+  },
+  "parent": "earth",
+  "polarRadiusM": 1737400,
+  "provenance": {
+    "accuracy": "Arcminute-level lunar position for 1900-2100; distance is approximate. No refraction, light-time, or eclipse-shadow correction.",
+    "attribution": "NASA LRO LROC mosaic; lunar theory after Paul Schlyter; orientation after the IAU via NAIF PCK.",
+    "coverage": "Earth-orbiting Moon over the contemporary window 1900-01-01 to 2100-01-01.",
+    "licence": "Public domain (NASA / US government works).",
+    "modelVersion": "legacy-lunar/1: Schlyter perturbed-Kepler elements with periodic terms; IAU libration angles including periodic terms. The built-in reference retains its embedded Schlyter epoch and d - 1.5 lunar-orientation convention; epochJD is the package reference epoch, not replacement model coefficients.",
+    "sources": [
+      "https://www.lroc.asu.edu/",
+      "https://stjarnhimlen.se/comp/ppcomp.html",
+      "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/pck00011.tpc"
+    ]
+  },
+  "rotation": {
+    "epochJD": 2451545,
+    "frame": "world-legacy",
+    "model": "legacy-lunar-libration",
+    "timeConvention": "tt-as-utc",
+    "validityEndJD": 2488069.5,
+    "validityStartJD": 2415020.5,
+    "version": "1"
+  },
+  "tier": "major"
+}

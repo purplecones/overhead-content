@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "kinds": {
+    "bodies": [
+      "moon",
+      "mars",
+      "mercury",
+      "venus",
+      "jupiter",
+      "saturn",
+      "uranus",
+      "neptune"
+    ]
+  }
+}

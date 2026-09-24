@@ -15,16 +15,18 @@ An image found through a search engine is not, no matter where it ends up being 
 
 1. **Fork this repository** and create a branch.
 
-2. **Create the entry directory**: `content/bodies/<id>/`.
+2. **Create the entry directory**: `content/bodies/<id>/`, and add `<id>` to `content/index.json` under `bodies`, at the position you want it shown.
    The id is lowercase, hyphen-separated, and stable forever - it is how the app identifies the body across releases.
 
 3. **Write `record.json`.** Copy an existing record of the same tier as your starting point rather than writing one from scratch.
    [docs/schema.md](docs/schema.md) is the field reference.
 
 4. **Add your assets** into the same directory and declare them in the record's `assets` array.
+   Write the entry's `README.md`: sources, attribution and licence.
+   Assets must be public domain, CC0, CC BY or CC BY-SA.
 
 5. **Stamp the asset metadata.** Do not fill in `sha256`, `byteLimit`, `width` or `height` by hand - they must match the bytes exactly or the app rejects the asset.
-   Run the stamping script from the app repository against your entry directory.
+   Run `python3 scripts/stamp.py content`, then `python3 scripts/stamp.py --check content` to confirm.
 
 6. **Test it in the app** by pointing Overhead at your fork or branch. See the README.
 

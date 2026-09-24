@@ -1,0 +1,102 @@
+{
+  "appearance": {
+    "absoluteMagnitude": -6.87,
+    "albedo": [
+      0.41,
+      0.41,
+      0.41
+    ],
+    "albedoScale": 1,
+    "photometry": {
+      "model": "lambert",
+      "version": "1"
+    },
+    "presentation": "ellipsoid",
+    "textureID": "neptune-2k"
+  },
+  "assets": [
+    {
+      "byteLimit": 241580,
+      "format": "jpeg",
+      "height": 1024,
+      "id": "neptune-2k",
+      "path": "texture.jpg",
+      "required": false,
+      "sha256": "cb42ea82709741d28b0af44d8b283cbc6dbd0c521a7f0e1e1e010ade00977df6",
+      "width": 2048
+    }
+  ],
+  "capabilities": {
+    "enhances": [],
+    "requires": [
+      "kepler-standish-table2a/1",
+      "iau-linear/1",
+      "lambert/1"
+    ]
+  },
+  "displayName": "Neptune",
+  "equatorialRadiusM": 24764000.0,
+  "gravitationalParameterM3S2": 6835100000000000.0,
+  "id": "neptune",
+  "kind": "body",
+  "orbit": {
+    "angleUnit": "deg",
+    "distanceUnit": "au",
+    "elements": {
+      "eccentricity": 0.00895439,
+      "inclinationDeg": 1.7700552,
+      "longitudeOfAscendingNodeDeg": 131.78635853,
+      "longitudeOfPerihelionDeg": 46.68158724,
+      "meanLongitudeDeg": 304.22289287,
+      "rateEccentricity": 8.18e-06,
+      "rateInclination": 0.000224,
+      "rateMeanLongitude": 218.46515314,
+      "rateNode": -0.00606302,
+      "ratePerihelion": 0.01009938,
+      "rateSemiMajorAxis": 6.447e-05,
+      "semiMajorAxisAU": 30.06952752
+    },
+    "epochJD": 2451545.0,
+    "frame": "ecliptic-j2000",
+    "model": "kepler-standish-table2a",
+    "timeConvention": "tt-as-utc",
+    "validityEndJD": 2816795.0,
+    "validityStartJD": 625295.0,
+    "version": "1"
+  },
+  "parent": "sun",
+  "polarRadiusM": 24341000.0,
+  "provenance": {
+    "accuracy": "Standish Table 2a fit errors apply on top of the omission below. Neptune is one of the four outer planets (Jupiter-Neptune) for which JPL states Table 2a's mean longitude 'must be augmented' by Table 2b; this app implements Table 2a only, so the mean anomaly (and hence heliocentric longitude) carries a periodic error M_err = b*T^2 + c*cos(f*T) + s*sin(f*T) degrees, T in Julian centuries from J2000, using Neptune's Table 2b coefficients b=-0.00041348, c=0.68346318, s=-0.10162547, f=7.67025 (all read directly from the same JPL page). Evaluated numerically over the record's own validity window (T=-50 at 3000 BC to T=+10 at AD 3000): the error is +0.683 deg at the J2000 epoch itself (T=0, since cos(0)=1 leaves the c term un-cancelled), -0.366 deg at the 3000 BC boundary, +0.017 deg at the AD 3000 boundary, and reaches its largest magnitude of about -0.96 deg near T=-26.3 centuries (roughly 500 BC). Converting via Neptune's near-circular orbit (a=30.07 AU), this is a heliocentric along-track position error of roughly 0.19-0.50 AU (28-75 million km) depending on epoch, worst near the middle of the BC half of the range and smallest near AD 3000 and near J2000 cancellation points where the terms happen to offset. Rotation is the secular linear IAU model only. The PCK BODY899 entry defines an additional periodic nutation-precession angle N = 357.85 + 52.316*T (T in Julian centuries from J2000, from BODY8_NUT_PREC_ANGLES) added as +0.70*sin(N) deg to the pole right ascension, -0.51*cos(N) deg to the pole declination, and -0.48*sin(N) deg to the prime meridian; the app's iau-linear model carries no periodic-term mechanism and omits all three, so at any given time the modelled Neptune pole orientation can be off by up to 0.70 deg in RA and up to 0.51 deg in declination, and the modelled rotation phase (sub-observer longitude) can be off by up to 0.48 deg, from this term alone. The albedo triple [0.41, 0.41, 0.41] is a flat split of the single published scalar geometric albedo (0.41) across the three channels, not a per-channel measurement; the shipped Mars record does the same. The texture is a colour map, not a photometric measurement, and does not carry the albedo: the flat albedo above is what the Lambert model scales.",
+    "attribution": "JPL Solar System Dynamics (orbit and physical parameters); NAIF / IAU Working Group on Cartographic Coordinates and Rotational Elements (rotation); Solar System Scope / INOVE (texture).",
+    "coverage": "Heliocentric Neptune over 3000 BC to AD 3000. The neptune-2k texture ships with the app; the record falls back to a flat albedo if it is ever absent.",
+    "licence": "Public domain (US government ephemeris and physical facts). Neptune texture CC BY 4.0, quoted from the source page: \"Distributed under Attribution 4.0 International license: You may use, adapt, and share these textures for any purpose, even commercially.\"",
+    "modelVersion": "Standish Table 2a (3000 BC-AD 3000) via JPL approximate positions, Table 2b periodic mean-anomaly correction NOT included (app implements Table 2a only); IAU/NAIF pck00011.tpc current BODY899 values, secular linear terms only, the periodic nutation-precession term N is NOT included (app's iau-linear model has no periodic-term support).",
+    "sources": [
+      "https://ssd.jpl.nasa.gov/planets/phys_par.html",
+      "https://nssdc.gsfc.nasa.gov/planetary/factsheet/neptunefact.html",
+      "https://ssd.jpl.nasa.gov/planets/approx_pos.html",
+      "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/pck00011.tpc",
+      "https://www.solarsystemscope.com/textures/"
+    ]
+  },
+  "rotation": {
+    "angleUnit": "deg",
+    "coefficients": {
+      "poleDeclination": 43.46,
+      "poleRateDec": 0.0,
+      "poleRateRA": 0.0,
+      "poleRightAscension": 299.36,
+      "primeMeridian": 249.978,
+      "rotationRate": 541.1397757
+    },
+    "epochJD": 2451545.0,
+    "frame": "equatorial-j2000",
+    "model": "iau-linear",
+    "timeConvention": "tt-as-utc",
+    "validityEndJD": 2816795.0,
+    "validityStartJD": 625295.0,
+    "version": "1"
+  },
+  "tier": "major"
+}

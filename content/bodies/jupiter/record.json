@@ -1,0 +1,102 @@
+{
+  "appearance": {
+    "absoluteMagnitude": -9.4,
+    "albedo": [
+      0.52,
+      0.52,
+      0.52
+    ],
+    "albedoScale": 1,
+    "photometry": {
+      "model": "lambert",
+      "version": "1"
+    },
+    "presentation": "ellipsoid",
+    "textureID": "jupiter-2k"
+  },
+  "assets": [
+    {
+      "byteLimit": 498976,
+      "format": "jpeg",
+      "height": 1024,
+      "id": "jupiter-2k",
+      "path": "texture.jpg",
+      "required": false,
+      "sha256": "b0f04d005350252636b0e3396fc592548cbd9e9126b269d32d5c6abd4b0e4f2b",
+      "width": 2048
+    }
+  ],
+  "capabilities": {
+    "enhances": [],
+    "requires": [
+      "kepler-standish-table2a/1",
+      "iau-linear/1",
+      "lambert/1"
+    ]
+  },
+  "displayName": "Jupiter",
+  "equatorialRadiusM": 71492000.0,
+  "gravitationalParameterM3S2": 1.26687e+17,
+  "id": "jupiter",
+  "kind": "body",
+  "orbit": {
+    "angleUnit": "deg",
+    "distanceUnit": "au",
+    "elements": {
+      "eccentricity": 0.0485359,
+      "inclinationDeg": 1.29861416,
+      "longitudeOfAscendingNodeDeg": 100.29282654,
+      "longitudeOfPerihelionDeg": 14.27495244,
+      "meanLongitudeDeg": 34.33479152,
+      "rateEccentricity": 0.00018026,
+      "rateInclination": -0.00322699,
+      "rateMeanLongitude": 3034.90371757,
+      "rateNode": 0.13024619,
+      "ratePerihelion": 0.18199196,
+      "rateSemiMajorAxis": -2.864e-05,
+      "semiMajorAxisAU": 5.20248019
+    },
+    "epochJD": 2451545.0,
+    "frame": "ecliptic-j2000",
+    "model": "kepler-standish-table2a",
+    "timeConvention": "tt-as-utc",
+    "validityEndJD": 2816795.0,
+    "validityStartJD": 625295.0,
+    "version": "1"
+  },
+  "parent": "sun",
+  "polarRadiusM": 66854000.0,
+  "provenance": {
+    "accuracy": "JPL's published nominal error for the Table 2a+2b fit for Jupiter over 3000 BC-AD 3000 is about 600 arcsec in heliocentric longitude, 100 arcsec in latitude, and 1,000,000 km in distance (approx_pos.html accuracy table); that figure assumes the Table 2b mean-anomaly correction is applied. This app implements Table 2a only, so actual errors are larger. Table 2b for Jupiter is b=-0.00012452, c=0.06064060, s=-0.35635438, f=38.35125000 (deg), added to the mean anomaly as b*T^2 + c*cos(f*T) + s*sin(f*T), T in centuries past J2000. Omitting it leaves an uncorrected periodic term of amplitude sqrt(c^2+s^2) = ~0.361 deg (~1300 arcsec) at any epoch, plus a secular term b*T^2 that grows from 0 at J2000 to about -0.012 deg (~45 arcsec) at the AD 3000 end of the validity window and about -0.31 deg (~1120 arcsec) at the 3000 BC end. This is a derived estimate from the Table 2b coefficients themselves, not a directly quoted 'Table-2a-only' error figure from JPL. Combined with the periodic term, the worst-case omitted correction to Jupiter's mean anomaly is on the order of 0.5-0.7 deg (roughly 1800-2500 arcsec) near the ends of the 3000 BC-AD 3000 window, translating to an along-track position error of several million km at Jupiter's ~5.2 AU heliocentric distance - well outside the 600 arcsec / 1,000,000 km budget that assumes 2b is included, and the dominant source of error in this record's orbit model. Rotation is the secular linear IAU model only (BODY599_POLE_RA/POLE_DEC/PM secular terms); the PCK's BODY599_NUT_PREC_RA/DEC/PM periodic nutation-precession terms (angles Ja-Je) are omitted, per the app's iau-linear model. The albedo triple [0.52, 0.52, 0.52] is a flat split of the single published scalar geometric albedo (0.52) across the three channels, not a per-channel measurement; the shipped Mars record does the same. The texture is a colour map, not a photometric measurement, and does not carry the albedo: the flat albedo above is what the Lambert model scales.",
+    "attribution": "JPL Solar System Dynamics (orbit elements, V(1,0), geometric albedo); NSSDC Jupiter Fact Sheet (equatorial radius, polar radius, ellipticity, GM); NAIF / IAU Working Group on Cartographic Coordinates and Rotational Elements (rotation, via pck00011.tpc current BODY599 values); Solar System Scope / INOVE (texture).",
+    "coverage": "Heliocentric Jupiter over 3000 BC to AD 3000 for the orbit model; rotation model validity window matched to the same span for catalogue consistency. The jupiter-2k texture ships with the app; the record falls back to a flat albedo if it is ever absent.",
+    "licence": "Public domain (US government ephemeris and physical facts). Jupiter texture CC BY 4.0, quoted from the source page: \"Distributed under Attribution 4.0 International license: You may use, adapt, and share these textures for any purpose, even commercially.\"",
+    "modelVersion": "Standish Table 2a (3000 BC-AD 3000) via JPL approximate positions, Table 2b mean-anomaly correction terms NOT applied (the app's kepler-standish-table2a/1 capability implements Table 2a only); NAIF pck00011.tpc current BODY599 secular orientation values (2015 IAU report, unchanged from prior revision per the kernel's own comment).",
+    "sources": [
+      "https://ssd.jpl.nasa.gov/planets/phys_par.html",
+      "https://nssdc.gsfc.nasa.gov/planetary/factsheet/jupiterfact.html",
+      "https://ssd.jpl.nasa.gov/planets/approx_pos.html",
+      "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/pck00011.tpc",
+      "https://www.solarsystemscope.com/textures/"
+    ]
+  },
+  "rotation": {
+    "angleUnit": "deg",
+    "coefficients": {
+      "poleDeclination": 64.495303,
+      "poleRateDec": 0.002413,
+      "poleRateRA": -0.006499,
+      "poleRightAscension": 268.056595,
+      "primeMeridian": 284.95,
+      "rotationRate": 870.536
+    },
+    "epochJD": 2451545.0,
+    "frame": "equatorial-j2000",
+    "model": "iau-linear",
+    "timeConvention": "tt-as-utc",
+    "validityEndJD": 2816795.0,
+    "validityStartJD": 625295.0,
+    "version": "1"
+  },
+  "tier": "major"
+}

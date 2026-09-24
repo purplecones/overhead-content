@@ -1,0 +1,102 @@
+{
+  "appearance": {
+    "absoluteMagnitude": -7.19,
+    "albedo": [
+      0.45,
+      0.52,
+      0.56
+    ],
+    "albedoScale": 1,
+    "photometry": {
+      "model": "lambert",
+      "version": "1"
+    },
+    "presentation": "ellipsoid",
+    "textureID": "uranus-2k"
+  },
+  "assets": [
+    {
+      "byteLimit": 77751,
+      "format": "jpeg",
+      "height": 1024,
+      "id": "uranus-2k",
+      "path": "texture.jpg",
+      "required": false,
+      "sha256": "d15239d46f82d3ea13d2b260b5b29b2a382f42f2916dae0694d0387b1204a09d",
+      "width": 2048
+    }
+  ],
+  "capabilities": {
+    "enhances": [],
+    "requires": [
+      "kepler-standish-table2a/1",
+      "iau-linear/1",
+      "lambert/1"
+    ]
+  },
+  "displayName": "Uranus",
+  "equatorialRadiusM": 25559000.0,
+  "gravitationalParameterM3S2": 5794000000000000.0,
+  "id": "uranus",
+  "kind": "body",
+  "orbit": {
+    "angleUnit": "deg",
+    "distanceUnit": "au",
+    "elements": {
+      "eccentricity": 0.0468574,
+      "inclinationDeg": 0.77298127,
+      "longitudeOfAscendingNodeDeg": 73.96250215,
+      "longitudeOfPerihelionDeg": 172.43404441,
+      "meanLongitudeDeg": 314.20276625,
+      "rateEccentricity": -1.55e-05,
+      "rateInclination": -0.00180155,
+      "rateMeanLongitude": 428.49512595,
+      "rateNode": 0.05739699,
+      "ratePerihelion": 0.09266985,
+      "rateSemiMajorAxis": -0.00020455,
+      "semiMajorAxisAU": 19.18797948
+    },
+    "epochJD": 2451545.0,
+    "frame": "ecliptic-j2000",
+    "model": "kepler-standish-table2a",
+    "timeConvention": "tt-as-utc",
+    "validityEndJD": 2816795.0,
+    "validityStartJD": 625295.0,
+    "version": "1"
+  },
+  "parent": "sun",
+  "polarRadiusM": 24973000.0,
+  "provenance": {
+    "accuracy": "Standish Table 2a fit for the 3000 BC-AD 3000 window carries JPL-stated nominal errors for Uranus of order hundreds of arcsec in ecliptic longitude/latitude and thousands of km in heliocentric distance (approx_pos.html accuracy table); on top of that baseline, JPL states the Table 2b correction terms 'must' be applied for Uranus over this window, and this app's kepler-standish-table2a/1 model implements Table 2a ONLY, so that correction is omitted. Quantifying the omission from Uranus's own Table 2b terms (b=0.00058331, c=-0.97731848, s=0.17689245, f=7.67025000 deg, applied to the mean anomaly as b*T^2 + c*cos(f*T) + s*sin(f*T), T in Julian centuries from J2000): at T=0 (the J2000 epoch itself) the omitted term is already c = -0.977 deg, i.e. this is not just an edge-of-range effect - a roughly 1 degree error in mean anomaly is present near the present era too. Across the full +/-50-century range the omitted term's computed magnitude stays roughly in the 0.5-1.5 degree band (b*T^2 grows to about 1.46 deg at T=+/-50 centuries while the periodic part, amplitude sqrt(c^2+s^2)=0.99 deg with a ~46.9-century period, partly cancels or adds depending on phase); at Uranus's semi-major axis of 19.19 AU, a 1 degree mean-anomaly error corresponds very roughly to a 0.2-0.3 AU (tens of millions of km) along-track heliocentric position error. This is a hand computation from the sourced b/c/s/f coefficients, not a verified comparison against JPL Horizons or any independent ephemeris. Rotation is the secular linear IAU model only (pck00011.tpc BODY799 constant + rate terms); unlike Mars or Jupiter, this kernel carries no periodic/nutation terms for Uranus's own pole at all, so nothing is being dropped there, but the model does assume the pole's right ascension and declination rates are exactly zero (fixed in inertial space) for the full +/-5000-year window, an assumption whose own accuracy over that span was not independently verified here. Uranus's axial tilt (~97.8 degrees between spin axis and orbit normal) and retrograde IAU rotation are both preserved unmodified: poleDeclination is reported as the kernel's -15.175 degrees and rotationRate as its -501.1600928 deg/day, with no sign correction applied. The albedo triple [0.45, 0.52, 0.56] is a stylistic per-channel split of the single published scalar geometric albedo (0.51, matching between JPL phys_par.html and the NSSDC fact sheet, and the triple's mean is 0.51 exactly); it approximates the pale cyan-blue cast methane absorption gives Uranus and is not a per-channel measurement. The shipped Mars record splits its own scalar flat for the same reason. The texture is a colour map, not a photometric measurement, and does not carry the albedo: the flat albedo above is what the Lambert model scales.",
+    "attribution": "JPL Solar System Dynamics (orbit and V(1,0)/geometric albedo); NASA NSSDC Planetary Fact Sheet (polar radius, flattening, and GM); NAIF / IAU Working Group (rotation); Solar System Scope / INOVE (texture).",
+    "coverage": "Heliocentric Uranus over 3000 BC to AD 3000, using Table 2a only (the mandatory Table 2b correction terms for this window are recorded in provenance.accuracy but not implemented). The uranus-2k texture ships with the app; the record falls back to a flat albedo if it is ever absent.",
+    "licence": "Public domain (US government ephemeris and physical facts). Uranus texture CC BY 4.0, quoted from the source page: \"Distributed under Attribution 4.0 International license: You may use, adapt, and share these textures for any purpose, even commercially.\"",
+    "modelVersion": "Standish Table 2a (3000 BC-AD 3000) via JPL approximate positions, Table 2b terms recorded but not applied; IAU 2015 via NAIF pck00011.tpc current BODY799 values (purely secular linear pole and rotation, zero pole precession rate, no periodic terms present in the source for this body).",
+    "sources": [
+      "https://ssd.jpl.nasa.gov/planets/phys_par.html",
+      "https://nssdc.gsfc.nasa.gov/planetary/factsheet/uranusfact.html",
+      "https://ssd.jpl.nasa.gov/planets/approx_pos.html",
+      "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/pck00011.tpc",
+      "https://www.solarsystemscope.com/textures/"
+    ]
+  },
+  "rotation": {
+    "angleUnit": "deg",
+    "coefficients": {
+      "poleDeclination": -15.175,
+      "poleRateDec": 0.0,
+      "poleRateRA": 0.0,
+      "poleRightAscension": 257.311,
+      "primeMeridian": 203.81,
+      "rotationRate": -501.1600928
+    },
+    "epochJD": 2451545.0,
+    "frame": "equatorial-j2000",
+    "model": "iau-linear",
+    "timeConvention": "tt-as-utc",
+    "validityEndJD": 2816795.0,
+    "validityStartJD": 625295.0,
+    "version": "1"
+  },
+  "tier": "major"
+}
