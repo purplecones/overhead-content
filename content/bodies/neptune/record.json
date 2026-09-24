@@ -34,7 +34,7 @@
       "lambert/1"
     ]
   },
-  "displayName": "Neptune",
+  "displayName": "Neptune (preview)",
   "equatorialRadiusM": 24764000.0,
   "gravitationalParameterM3S2": 6835100000000000.0,
   "id": "neptune",
