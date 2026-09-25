@@ -1,0 +1,34 @@
+{
+  "kind": "transit-feed",
+  "id": "mta-bus",
+  "agency": "MTA New York City Transit and MTA Bus",
+  "coverage": { "minLat": 40.4, "minLon": -74.3, "maxLat": 41.0, "maxLon": -73.6 },
+  "modes": ["bus"],
+  "positioning": "gps",
+  "realtime": {
+    "vehiclePositions": ["https://gtfsrt.prod.obanyc.com/vehiclePositions"],
+    "tripUpdates": [],
+    "refreshSeconds": 30,
+    "key": null
+  },
+  "static": {
+    "gtfs": [
+      "https://rrgtfsfeeds.s3.amazonaws.com/gtfs_b.zip",
+      "https://rrgtfsfeeds.s3.amazonaws.com/gtfs_bx.zip",
+      "https://rrgtfsfeeds.s3.amazonaws.com/gtfs_m.zip",
+      "https://rrgtfsfeeds.s3.amazonaws.com/gtfs_q.zip",
+      "https://rrgtfsfeeds.s3.amazonaws.com/gtfs_si.zip",
+      "https://rrgtfsfeeds.s3.amazonaws.com/gtfs_busco.zip"
+    ],
+    "key": null
+  },
+  "licence": {
+    "name": "MTA Data Feed Terms and Conditions",
+    "url": "https://www.mta.info/developers/terms-and-conditions",
+    "credit": "MTA"
+  },
+  "provenance": {
+    "verifiedAt": "2026-09-25",
+    "notes": "Bus Time served all buses without a key on 2026-09-25. If MTA starts enforcing keys, set realtime.key to {\"secret\": \"TRANSIT_KEY_MTA_BUS_TIME\", \"query\": \"key\"}."
+  }
+}

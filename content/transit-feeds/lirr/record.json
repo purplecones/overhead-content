@@ -1,0 +1,27 @@
+{
+  "kind": "transit-feed",
+  "id": "lirr",
+  "agency": "Long Island Rail Road",
+  "coverage": { "minLat": 40.5, "minLon": -74.05, "maxLat": 41.2, "maxLon": -71.8 },
+  "modes": ["rail"],
+  "positioning": "gps",
+  "realtime": {
+    "vehiclePositions": ["https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/lirr%2Fgtfs-lirr"],
+    "tripUpdates": [],
+    "refreshSeconds": 30,
+    "key": null
+  },
+  "static": {
+    "gtfs": ["https://rrgtfsfeeds.s3.amazonaws.com/gtfslirr.zip"],
+    "key": null
+  },
+  "licence": {
+    "name": "MTA Data Feed Terms and Conditions",
+    "url": "https://www.mta.info/developers/terms-and-conditions",
+    "credit": "MTA Long Island Rail Road"
+  },
+  "provenance": {
+    "verifiedAt": "2026-09-25",
+    "notes": "One feed carries vehicles and trip updates; vehicles omit routeId, which the ingest joins from trip updates in the same feed."
+  }
+}

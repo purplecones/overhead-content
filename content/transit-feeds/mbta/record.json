@@ -1,0 +1,27 @@
+{
+  "kind": "transit-feed",
+  "id": "mbta",
+  "agency": "Massachusetts Bay Transportation Authority",
+  "coverage": { "minLat": 41.2, "minLon": -71.9, "maxLat": 43.0, "maxLon": -69.9 },
+  "modes": ["bus", "subway", "light-rail", "rail", "ferry"],
+  "positioning": "gps",
+  "realtime": {
+    "vehiclePositions": ["https://cdn.mbta.com/realtime/VehiclePositions.pb"],
+    "tripUpdates": ["https://cdn.mbta.com/realtime/TripUpdates.pb"],
+    "refreshSeconds": 10,
+    "key": null
+  },
+  "static": {
+    "gtfs": ["https://cdn.mbta.com/MBTA_GTFS.zip"],
+    "key": null
+  },
+  "licence": {
+    "name": "MassDOT Developers License Agreement",
+    "url": "https://www.mass.gov/files/documents/2017/10/27/develop_license_agree_0.pdf",
+    "credit": "MBTA"
+  },
+  "provenance": {
+    "verifiedAt": "2026-09-25",
+    "notes": "npm run transit:try on 2026-09-25 committed 533 vehicles from 543 VehiclePositions entities and 1271 TripUpdates entities, 10 rejected, 0 outside coverage."
+  }
+}

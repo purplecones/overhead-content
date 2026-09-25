@@ -1,0 +1,27 @@
+{
+  "kind": "transit-feed",
+  "id": "nyc-ferry",
+  "agency": "NYC Ferry",
+  "coverage": { "minLat": 40.55, "minLon": -74.1, "maxLat": 40.9, "maxLon": -73.7 },
+  "modes": ["ferry"],
+  "positioning": "gps",
+  "realtime": {
+    "vehiclePositions": ["https://nycferry.connexionz.net/rtt/public/utility/gtfsrealtime.aspx/vehicleposition"],
+    "tripUpdates": [],
+    "refreshSeconds": 30,
+    "key": null
+  },
+  "static": {
+    "gtfs": ["https://nycferry.connexionz.net/rtt/public/utility/gtfs.aspx"],
+    "key": null
+  },
+  "licence": {
+    "name": "NYC Ferry Developer Tools terms",
+    "url": "https://www.ferry.nyc/developer-tools/",
+    "credit": "NYC Ferry"
+  },
+  "provenance": {
+    "verifiedAt": "2026-09-25",
+    "notes": "One feed carries vehicles and trip updates; vehicles omit routeId, which the ingest joins from trip updates in the same feed."
+  }
+}

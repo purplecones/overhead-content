@@ -10,6 +10,13 @@
       "saturn",
       "uranus",
       "neptune"
+    ],
+    "transit-feeds": [
+      "mbta",
+      "mta-bus",
+      "lirr",
+      "metro-north",
+      "nyc-ferry"
     ]
   }
 }
