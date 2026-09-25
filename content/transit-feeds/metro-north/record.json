@@ -1,0 +1,27 @@
+{
+  "kind": "transit-feed",
+  "id": "metro-north",
+  "agency": "Metro-North Railroad",
+  "coverage": { "minLat": 40.7, "minLon": -74.1, "maxLat": 42.0, "maxLon": -72.8 },
+  "modes": ["rail"],
+  "positioning": "gps",
+  "realtime": {
+    "vehiclePositions": ["https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/mnr%2Fgtfs-mnr"],
+    "tripUpdates": [],
+    "refreshSeconds": 30,
+    "key": null
+  },
+  "static": {
+    "gtfs": ["https://rrgtfsfeeds.s3.amazonaws.com/gtfsmnr.zip"],
+    "key": null
+  },
+  "licence": {
+    "name": "MTA Data Feed Terms and Conditions",
+    "url": "https://www.mta.info/developers/terms-and-conditions",
+    "credit": "MTA Metro-North Railroad"
+  },
+  "provenance": {
+    "verifiedAt": "2026-09-25",
+    "notes": "Only about a fifth of reported trains carry a position; the rest are skipped until Plan 2 places them from predictions."
+  }
+}

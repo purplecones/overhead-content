@@ -67,6 +67,27 @@ Use it for anything optional, so your record still draws on older builds.
 Do not invent capability names.
 The app implements a fixed set, and a record requiring an unimplemented one is skipped everywhere until the app gains it.
 
+## Adding a transit feed
+
+Transit feed records track an agency's live vehicle positions and follow their own schema, separate from bodies.
+
+1. **Find the feeds.** Locate the agency's GTFS-realtime feed URLs (vehicle positions and, if published separately, trip updates), its static GTFS URL, and its data licence.
+
+2. **Create the entry directory**: `content/transit-feeds/<id>/record.json`, by copying a neighbouring record as your starting point.
+   Add `<id>` to `content/index.json` under `transit-feeds`.
+   [docs/transit-feeds.md](docs/transit-feeds.md) is the field reference.
+
+3. **Never write a key's value in a record.** A record only names a secret; it never carries the secret itself.
+   If the feed requires a key, set `realtime.key` (or `static.key`) to `{ "secret": "TRANSIT_KEY_<NAME>", "query": "<param>" }` or to the same shape with `"header"` instead of `"query"`.
+   The secret name must start with `TRANSIT_KEY_`, followed only by `A-Z`, `0-9`, and underscore.
+   The maintainer adds the actual value as a Worker secret of that exact name once the record is merged; until then the feed is admitted but dormant, reported as `awaiting-secret`.
+
+4. **Test it.** Run `npm run transit:try -- path/to/record.json` in the Overhead repository.
+   It validates the record, fetches its live feeds once, and prints what the ingest would commit.
+   Paste its output into the pull request.
+
+5. **Cite the licence and credit exactly as the agency states them.** A feed nobody can credit is not admitted.
+
 ## Style
 
 - No em dashes. Use a plain `-`.
