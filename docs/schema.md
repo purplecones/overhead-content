@@ -141,6 +141,40 @@ Prefer `false` - it degrades instead of failing.
 
 Textures are plate carrée (equirectangular), 2:1.
 
+## Layers
+
+```json
+"layers": [{
+  "type": "rings",
+  "version": "1",
+  "params": { "innerRadiusM": 69856529, "outerRadiusM": 140899719, "castsShadow": true },
+  "assets": [{ "id": "saturn-rings-profile", "role": "profile", "path": "rings-profile.png", "format": "png", "width": 2048, "height": 1, "...": "stamped like any asset" }]
+}]
+```
+
+A layer adds something drawn on top of the body's surface.
+Each layer's `type/version` is a capability and must be listed under `requires` or `enhances`.
+Under `enhances`, a build without the layer drops it and still draws the body; under `requires`, such a build skips the record.
+Unknown params and out-of-range values reject the record, so a typo is reported rather than ignored.
+Layer assets are stamped and verified exactly like `assets`.
+
+### `rings/1`
+
+A flat ring disc in the body's equatorial plane, lit by the Sun and shadowed by the body.
+
+| Param | Range | Default | Notes |
+| --- | --- | --- | --- |
+| `innerRadiusM` | metres | required | Inner edge, from the body's centre. |
+| `outerRadiusM` | metres | required | Outer edge, at most 20 equatorial radii. |
+| `opacityScale` | 0 to 4 | 1 | Multiplies the profile's opacity. |
+| `brightness` | 0 to 8 | 1 | Multiplies scattered light. |
+| `tint` | three values, 0 to 4 | `[1, 1, 1]` | Colour multiplier. |
+| `litAsymmetry` | -0.95 to 0.95 | -0.3 | Forward or back scattering on the sunlit face. |
+| `unlitAsymmetry` | -0.95 to 0.95 | 0.6 | Forward or back scattering seen through the unlit face. |
+| `castsShadow` | true or false | true | Whether the rings shade the body's surface. |
+
+The `profile` asset is a PNG with alpha, one pixel high and up to 2048 wide, sampled from the inner to the outer edge.
+
 ## Provenance
 
 ```json

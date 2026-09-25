@@ -97,7 +97,9 @@ def dimensions(data: bytes, declared_format: str, label: str) -> tuple[int, int]
 def stamp_record(path: Path, check_only: bool) -> bool:
     """Returns True when the record on disk was already correct."""
     record = json.loads(path.read_text())
-    assets = record.get("assets") or []
+    assets = list(record.get("assets") or [])
+    for layer in record.get("layers") or []:
+        assets.extend(layer.get("assets") or [])
     stale: list[str] = []
     for asset in assets:
         asset_path = path.parent / asset["path"]

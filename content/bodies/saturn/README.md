@@ -1,6 +1,7 @@
 # Saturn
 
 Texture asset `saturn-2k` is stored as `texture.jpg`.
+Ring profile asset `saturn-rings-profile` is stored as `rings-profile.png`, resampled from Solar System Scope's Saturn ring alpha map and calibrated to the NSSDC ring radii.
 JPL Solar System Dynamics (orbit); NAIF / IAU Working Group (rotation); NASA NSSDC (physical parameters and ring geometry); Solar System Scope / INOVE (texture).
 - Source: <https://ssd.jpl.nasa.gov/planets/phys_par.html>
 - Source: <https://nssdc.gsfc.nasa.gov/planetary/factsheet/saturnfact.html>
@@ -10,6 +11,6 @@ JPL Solar System Dynamics (orbit); NAIF / IAU Working Group (rotation); NASA NSS
 - Source: <https://ssd.jpl.nasa.gov/astro_par.html>
 - Source: <https://www.solarsystemscope.com/textures/>
 Public domain (US government ephemeris and physical facts).
-Saturn texture CC BY 4.0.
+Saturn texture and ring profile CC BY 4.0.
 The texture licence below is quoted from the source page.
 "Distributed under Attribution 4.0 International license: You may use, adapt, and share these textures for any purpose, even commercially."

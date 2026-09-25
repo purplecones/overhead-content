@@ -41,6 +41,30 @@
   "gravitationalParameterM3S2": 3.7931e+16,
   "id": "saturn",
   "kind": "body",
+  "layers": [
+    {
+      "assets": [
+        {
+          "byteLimit": 3722,
+          "format": "png",
+          "height": 1,
+          "id": "saturn-rings-profile",
+          "path": "rings-profile.png",
+          "required": true,
+          "role": "profile",
+          "sha256": "3dcdf6b63be79ee322a373c86d0b78aa9291adcc51435ae793bfa3a890ce0e6d",
+          "width": 2048
+        }
+      ],
+      "params": {
+        "castsShadow": true,
+        "innerRadiusM": 69856529,
+        "outerRadiusM": 140899719
+      },
+      "type": "rings",
+      "version": "1"
+    }
+  ],
   "orbit": {
     "angleUnit": "deg",
     "distanceUnit": "au",
@@ -69,9 +93,9 @@
   "parent": "sun",
   "polarRadiusM": 54364000.0,
   "provenance": {
-    "accuracy": "Standish Table 2a fit for the 3000 BC-AD 3000 window has JPL-stated nominal errors for Saturn of about 1000 arcsec in ecliptic longitude, 100 arcsec in ecliptic latitude, and 4000 (x1000 km) in heliocentric distance (approx_pos.html accuracy table). JPL's page also states that for Jupiter through Neptune the Table 2b correction terms 'must' be applied over this window; this app implements Table 2a ONLY, so Saturn's modeled position omits that correction. Quantifying the omission from Saturn's own Table 2b terms (b=0.00025899, c=-0.13434469, s=0.87320147, f=38.35125000, applied to the mean anomaly as b*T^2 + c*cos(f*T) + s*sin(f*T), T in Julian centuries from J2000): the periodic part alone has amplitude sqrt(c^2+s^2) = 0.88 deg regardless of epoch (so even near J2000, at T=0, the omitted constant term c contributes about -0.13 deg by itself); the quadratic part b*T^2 grows with distance from J2000 and reaches about 0.65 deg at the 3000 BC end of the range (T=-50 centuries) versus about 0.03 deg at the AD 3000 end (T=+10 centuries). So the omission can add on the order of 0.1-0.9 deg of extra mean-anomaly (and roughly similar heliocentric-longitude) error near the present era, growing to on the order of 1-1.5 deg near 3000 BC - on top of, not instead of, the ~0.28 deg (1000 arcsec) baseline Table-2a error above. Rotation is the secular linear IAU model only (pck00011.tpc BODY699 constant + rate terms); this kernel carries no periodic/nutation terms for Saturn, but the linear PM rate itself represents Saturn's IAU System III (radio/magnetic-field) rotation period, not the real, latitude-dependent differential rotation of the visible cloud deck. Rings are not rendered by this app (see capabilities.enhances); absoluteMagnitude (-8.91) is NSSDC's ring-excluded V(1,0), so the single value here cannot capture how much brighter Saturn actually appears when its rings are present and open - real apparent brightness varies by roughly half a magnitude to a full magnitude or more across Saturn's ~29.5-year orbit as the ring-opening angle (and thus reflected ring light) changes. The albedo triple [0.53, 0.51, 0.43] is a stylistic per-channel split of the single published scalar geometric albedo (NSSDC's wavelength-independent 0.499, and the triple's mean is 0.49); it approximates Saturn's pale gold cast and is not a per-channel measurement. The shipped Mars record splits its own scalar flat for the same reason. The texture is a colour map, not a photometric measurement, and does not carry the albedo: the flat albedo above is what the Lambert model scales. The texture carries the globe only; the ring system is absent from it, which is why the record asks for rings as an enhancement rather than requiring one.",
+    "accuracy": "Standish Table 2a fit for the 3000 BC-AD 3000 window has JPL-stated nominal errors for Saturn of about 1000 arcsec in ecliptic longitude, 100 arcsec in ecliptic latitude, and 4000 (x1000 km) in heliocentric distance (approx_pos.html accuracy table). JPL's page also states that for Jupiter through Neptune the Table 2b correction terms 'must' be applied over this window; this app implements Table 2a ONLY, so Saturn's modeled position omits that correction. Quantifying the omission from Saturn's own Table 2b terms (b=0.00025899, c=-0.13434469, s=0.87320147, f=38.35125000, applied to the mean anomaly as b*T^2 + c*cos(f*T) + s*sin(f*T), T in Julian centuries from J2000): the periodic part alone has amplitude sqrt(c^2+s^2) = 0.88 deg regardless of epoch (so even near J2000, at T=0, the omitted constant term c contributes about -0.13 deg by itself); the quadratic part b*T^2 grows with distance from J2000 and reaches about 0.65 deg at the 3000 BC end of the range (T=-50 centuries) versus about 0.03 deg at the AD 3000 end (T=+10 centuries). So the omission can add on the order of 0.1-0.9 deg of extra mean-anomaly (and roughly similar heliocentric-longitude) error near the present era, growing to on the order of 1-1.5 deg near 3000 BC - on top of, not instead of, the ~0.28 deg (1000 arcsec) baseline Table-2a error above. Rotation is the secular linear IAU model only (pck00011.tpc BODY699 constant + rate terms); this kernel carries no periodic/nutation terms for Saturn, but the linear PM rate itself represents Saturn's IAU System III (radio/magnetic-field) rotation period, not the real, latitude-dependent differential rotation of the visible cloud deck. Rings are drawn as a single-scattering slab from a 2048-texel radial profile resampled from Solar System Scope's ring alpha map, calibrated on the Cassini Division's inner edge and the Encke Gap against the NSSDC ring fact sheet, with the A ring's outer edge as the check; ring particles and thickness are not modelled. absoluteMagnitude (-8.91) is NSSDC's ring-excluded V(1,0), so the single value here cannot capture how much brighter Saturn actually appears when its rings are present and open - real apparent brightness varies by roughly half a magnitude to a full magnitude or more across Saturn's ~29.5-year orbit as the ring-opening angle (and thus reflected ring light) changes. The albedo triple [0.53, 0.51, 0.43] is a stylistic per-channel split of the single published scalar geometric albedo (NSSDC's wavelength-independent 0.499, and the triple's mean is 0.49); it approximates Saturn's pale gold cast and is not a per-channel measurement. The shipped Mars record splits its own scalar flat for the same reason. The texture is a colour map, not a photometric measurement, and does not carry the albedo: the flat albedo above is what the Lambert model scales. The texture carries the globe only; the ring system is absent from it, which is why the record asks for rings as an enhancement rather than requiring one.",
     "attribution": "JPL Solar System Dynamics (orbit); NAIF / IAU Working Group (rotation); NASA NSSDC (physical parameters and ring geometry); Solar System Scope / INOVE (texture).",
-    "coverage": "Heliocentric Saturn over 3000 BC to AD 3000, using Table 2a only (the mandatory Table 2b correction terms for this window are recorded in provenance.accuracy but not implemented). The saturn-2k texture ships with the app; the record falls back to a flat albedo if it is ever absent.",
+    "coverage": "Heliocentric Saturn over 3000 BC to AD 3000, using Table 2a only (the mandatory Table 2b correction terms for this window are recorded in provenance.accuracy but not implemented). The saturn-2k texture ships with the app; the record falls back to a flat albedo if it is ever absent. The rings-profile asset ships with the app; builds without rings/1 draw Saturn without rings.",
     "licence": "Public domain (US government ephemeris and physical facts). Saturn texture CC BY 4.0, quoted from the source page: \"Distributed under Attribution 4.0 International license: You may use, adapt, and share these textures for any purpose, even commercially.\"",
     "modelVersion": "Standish Table 2a (3000 BC-AD 3000) via JPL approximate positions; secular linear pole/PM via NAIF pck00011.tpc current BODY699 values.",
     "sources": [
@@ -81,7 +105,8 @@
       "https://ssd.jpl.nasa.gov/planets/approx_pos.html",
       "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/pck00011.tpc",
       "https://ssd.jpl.nasa.gov/astro_par.html",
-      "https://www.solarsystemscope.com/textures/"
+      "https://www.solarsystemscope.com/textures/",
+      "https://www.solarsystemscope.com/textures/download/8k_saturn_ring_alpha.png"
     ]
   },
   "rotation": {
