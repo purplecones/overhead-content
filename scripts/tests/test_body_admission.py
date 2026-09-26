@@ -213,6 +213,19 @@ class BodyAdmissionTests(unittest.TestCase):
         write_entry(self.root, "bodies", "vesta", major("vesta"), {"texture.jpg": FAKE_JPEG})
         self.assertEqual(self.found(major("ceres", parent="vesta")), [])
 
+    def test_major_parent_skipped_for_an_unimplemented_capability_is_no_parent(self):
+        vesta = major("vesta")
+        vesta["capabilities"]["requires"].append("future-thing/1")
+        write_entry(self.root, "bodies", "vesta", vesta, {"texture.jpg": FAKE_JPEG})
+        found = self.found(major("ceres", parent="vesta"))
+        self.assertReported(found, "parent 'vesta' requires 'future-thing/1', which current app builds do not implement")
+
+    def test_major_requiring_a_layer_capability_is_still_a_parent(self):
+        vesta = major("vesta")
+        vesta["capabilities"]["requires"].append("rings/1")
+        write_entry(self.root, "bodies", "vesta", vesta, {"texture.jpg": FAKE_JPEG})
+        self.assertEqual(self.found(major("ceres", parent="vesta")), [])
+
     def test_parent_cycle_is_rejected(self):
         write_entry(self.root, "bodies", "vesta", major("vesta", parent="ceres"), {"texture.jpg": FAKE_JPEG})
         found = self.found(major("ceres", parent="vesta"))

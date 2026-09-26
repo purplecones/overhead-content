@@ -78,7 +78,7 @@ Minor-tier records, and a `legacy-lunar-schlyter` orbit for any parent but Earth
 - `presentation` is `sphere` only when the two radii are equal, otherwise `ellipsoid`.
 - `tier` is `major` when you have a texture; radii and rotation are required either way now, so texture is the only thing tier still depends on.
   Without a texture, use `minor`.
-  A major body's `parent` must be `sun`, `earth`, or another major body in the index.
+  A major body's `parent` must be `sun`, `earth`, or another major body in the index that requires only capabilities current app builds implement.
 - `provenance.accuracy` must state what the model omits and how large the error is.
 - Current app builds accept at most 14 major bodies and 64 body records, and fail every body at once when one body record breaks a rule.
   `validate.py` mirrors those rules, including the orbit and rotation evaluation at both validity endpoints, so treat any problem it reports on a body as blocking.
