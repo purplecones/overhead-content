@@ -52,7 +52,7 @@ The order of ids under `bodies` is the on-screen order; never sort that array.
 5. Write the entry's `README.md`: what it is, each source as a link, the licence, and the attribution the licence requires.
 6. Commit with a message such as `feat(bodies): add Ceres` and open a pull request using the template.
    For a body, tell the person how to test it on their phone before the review: open `overhead://content?source=https://github.com/<owner>/overhead-content/tree/<branch>` on the phone, or paste that GitHub URL under Options, Content.
-   The app reads bodies and events, so a phone preview shows both; the app release that reads craft from this repository has not shipped yet, so for craft `validate.py` is the check until then.
+   The app reads bodies, events and craft, so a phone preview shows all three; satellite models are admitted but not drawn yet.
 
 One entry per pull request unless the entries only make sense together.
 
@@ -110,7 +110,7 @@ Minor-tier records, and a `legacy-lunar-schlyter` orbit for any parent but Earth
   NASA's 3D resources are `public-domain`.
   Sketchfab models are acceptable only under CC0 or CC BY, downloaded from the model's own page.
 - `validate.py` mirrors the structural checks of the app's model loader.
-  The app release that draws craft from this repository has not shipped yet, so there is no phone preview for a model; `validate.py` is the check until then.
+  A phone pointed at the branch shows the model on matching craft once they are close enough to draw as bodies; satellite models are admitted but not drawn yet.
 - Reference: `docs/craft.md`.
 
 ### Transit feeds (`content/transit-feeds/`)

@@ -1,0 +1,33 @@
+{
+  "dimensions": {
+    "length": 18.0,
+    "span": 3.05
+  },
+  "id": "starter-subway-car",
+  "kind": "craft",
+  "licence": "CC0-1.0",
+  "matches": {
+    "classes": [
+      "subway",
+      "light-rail",
+      "rail"
+    ],
+    "default": false,
+    "types": []
+  },
+  "model": {
+    "byteLimit": 10776,
+    "format": "glb",
+    "id": "model",
+    "path": "model.glb",
+    "required": true,
+    "sha256": "549205032f75ccc634253f624f4727676aeae194028a8fcf2cc6c594cc22c170"
+  },
+  "name": "Subway car (starter)",
+  "provenance": {
+    "attribution": "Subway car (starter), original work by the Overhead project",
+    "sources": [
+      "https://github.com/purplecones/overhead-content/tree/main/content/craft/transit/starter-subway-car"
+    ]
+  }
+}

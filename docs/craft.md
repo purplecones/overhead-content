@@ -6,7 +6,7 @@ A craft record supplies the 3D model the app draws for a class of aircraft, vess
 The live feeds decide where each craft is; the record decides only what it looks like.
 
 `content/craft/<domain>/<id>/record.json` beside `model.glb` and a `README.md`, checked by `schema/craft.schema.json` and `scripts/validate.py`.
-The app release that draws craft from this repository has not shipped yet, so a phone preview does not show a model; `scripts/validate.py` is the check until it does.
+The app draws aircraft, vessel and transit models; satellite models are admitted but not drawn yet.
 The domains are `aircraft`, `vessels`, `satellites` and `transit`.
 
 ## Fields
@@ -43,10 +43,18 @@ Two records may not claim the same type, and a domain has at most one default; t
   Colour comes from each material's `baseColorFactor`.
 - Y is up and the nose, bow or direction of travel points along -Z.
   Export from Blender with `+Y Up` and the model facing +Y in Blender's own frame: the glTF exporter maps Blender (x, y, z) to glTF (x, z, -y), so Blender's +Y becomes glTF's -Z.
-- Authored units do not matter: the app scales the model uniformly so its extent along Z equals `dimensions.length`.
+- Authored units and origin do not matter: the app scales the model uniformly so its extent along Z equals `dimensions.length`, then places it by its bounds.
+  An aircraft hangs centred on its reported position; a vessel or transit vehicle stands on its lowest point, so model a ship above the waterline only.
 - Keep it as light as it can be while reading well at a few hundred pixels.
   There is no vertex or byte limit, but a phone draws dozens of these at once, so a heavy model costs everyone frames.
 - `python3 scripts/validate.py content` mirrors the structural checks of the app's model loader (`GlobeGLB.swift`, `GlobeAircraftAsset.swift`), so a model it rejects would fail to load in the app too.
+
+## Where models appear
+
+A craft draws as a dot until it is a few points across on screen, then as its model.
+Transit vehicles without a model stay dots at every distance; with one, the nearest 96 in view draw as bodies.
+The Data Sources screen credits every admitted model with its name, attribution, licence and sources.
+`scripts/craft/starter_models.py` builds the starter bus, subway car and container ship from boxes; it is also a small, dependency-free example of writing a valid GLB.
 
 ## Licence
 

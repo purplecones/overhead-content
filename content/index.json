@@ -52,6 +52,13 @@
       "2034-09-12",
       "2035-03-09",
       "2035-09-02"
+    ],
+    "craft/transit": [
+      "starter-bus",
+      "starter-subway-car"
+    ],
+    "craft/vessels": [
+      "starter-cargo-ship"
     ]
   }
 }
