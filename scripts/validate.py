@@ -21,9 +21,31 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+try:
+    from jsonschema import Draft202012Validator
+except ImportError:  # pragma: no cover
+    print("validate.py needs jsonschema: python3 -m pip install -r requirements-dev.txt", file=sys.stderr)
+    raise SystemExit(2)
+
 RECORD = "record.json"
 README = "README.md"
 INDEX = "index.json"
+SCHEMA_DIR = Path(__file__).resolve().parents[1] / "schema"
+_validators: dict[str, Draft202012Validator] = {}
+
+
+def schema_validator(name: str) -> Draft202012Validator:
+    if name not in _validators:
+        _validators[name] = Draft202012Validator(json.loads((SCHEMA_DIR / name).read_text()))
+    return _validators[name]
+
+
+def schema_problems(value, schema_name: str, path: str) -> list[Problem]:
+    problems = []
+    for error in sorted(schema_validator(schema_name).iter_errors(value), key=lambda e: list(e.absolute_path)):
+        where = ".".join(str(p) for p in error.absolute_path)
+        problems.append(Problem(path, f"{where + ': ' if where else ''}{error.message}"))
+    return problems
 
 
 @dataclass(frozen=True)
@@ -75,6 +97,62 @@ class SolarEclipseKind(Kind):
 register(SolarEclipseKind())
 
 
+class BodiesKind(Kind):
+    key = "bodies"
+    record_kind = "body"
+    schema = "body.schema.json"
+
+    def assets_of(self, record: dict) -> list[dict]:
+        assets = list(record.get("assets") or [])
+        for layer in record.get("layers") or []:
+            assets.extend(layer.get("assets") or [])
+        return [a for a in assets if isinstance(a, dict)]
+
+    def check(self, entry: Entry, records: list[Entry], root: Path) -> list[Problem]:
+        record, path, problems = entry.record, rel(root, entry.record_path), []
+        asset_ids = {a.get("id") for a in self.assets_of(record)}
+        texture = (record.get("appearance") or {}).get("textureID")
+        if texture is not None and texture not in asset_ids:
+            problems.append(Problem(path, f"appearance.textureID {texture!r} names no asset"))
+        if record.get("tier") == "major" and not all([
+            record.get("equatorialRadiusM"), record.get("polarRadiusM"), record.get("rotation"), texture,
+        ]):
+            problems.append(Problem(path, "a major body needs equatorialRadiusM, polarRadiusM, rotation, "
+                                          "and appearance.textureID"))
+        return problems
+
+
+class TransitFeedsKind(Kind):
+    key = "transit-feeds"
+    record_kind = "transit-feed"
+    schema = "transit-feed.schema.json"
+
+    def check(self, entry: Entry, records: list[Entry], root: Path) -> list[Problem]:
+        record, path, problems = entry.record, rel(root, entry.record_path), []
+        coverage = record.get("coverage") or {}
+        if all(isinstance(coverage.get(k), (int, float)) for k in ("minLat", "maxLat", "minLon", "maxLon")):
+            if not coverage["minLat"] < coverage["maxLat"]:
+                problems.append(Problem(path, "coverage.minLat must be less than maxLat"))
+            if not coverage["minLon"] < coverage["maxLon"]:
+                problems.append(Problem(path, "coverage.minLon must be less than maxLon"))
+            if coverage["maxLat"] - coverage["minLat"] > 10 or coverage["maxLon"] - coverage["minLon"] > 10:
+                problems.append(Problem(path, "coverage may span at most 10 degrees each way"))
+        realtime = record.get("realtime") or {}
+        if record.get("positioning") == "gps" and not realtime.get("vehiclePositions"):
+            problems.append(Problem(path, "a gps feed needs at least one realtime.vehiclePositions URL"))
+        if record.get("positioning") == "predicted" and not realtime.get("tripUpdates"):
+            problems.append(Problem(path, "a predicted feed needs at least one realtime.tripUpdates URL"))
+        for section in ("realtime", "static"):
+            key = (record.get(section) or {}).get("key")
+            if isinstance(key, dict) and (("query" in key) == ("header" in key)):
+                problems.append(Problem(path, f"{section}.key names exactly one of 'query' or 'header'"))
+        return problems
+
+
+register(BodiesKind())
+register(TransitFeedsKind())
+
+
 def rel(root: Path, path: Path) -> str:
     """Paths are printed relative to the repository root, where people run git."""
     return str(path.relative_to(root.parent))
@@ -94,6 +172,7 @@ def entries_of(root: Path, problems: list[Problem]) -> list[Entry]:
     if not isinstance(index, dict) or not isinstance(index.get("kinds"), dict):
         problems.append(Problem(rel(root, index_path), "must be an object with a 'kinds' object"))
         return []
+    problems += schema_problems(index, "index.schema.json", rel(root, index_path))
     entries: list[Entry] = []
     for key in index["kinds"]:
         if key not in KINDS:
@@ -178,8 +257,11 @@ def validate(root: Path) -> list[Problem]:
         by_kind.setdefault(entry.kind, []).append(entry)
     for entry in entries:
         problems += check_identity(entry, root)
+        kind = KINDS[entry.kind]
+        if kind.schema:
+            problems += schema_problems(entry.record, kind.schema, rel(root, entry.record_path))
         problems += check_files(entry, root)
-        problems += KINDS[entry.kind].check(entry, by_kind[entry.kind], root)
+        problems += kind.check(entry, by_kind[entry.kind], root)
     return problems
 
 

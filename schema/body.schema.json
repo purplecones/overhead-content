@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/purplecones/overhead-content/main/schema/body.schema.json",
+  "title": "Body record",
+  "description": "content/bodies/<id>/record.json. Structure only; the app's admission checks numeric sanity, capability support, and asset digests. docs/schema.md is the field reference.",
+  "type": "object",
+  "required": ["kind", "id", "tier", "displayName", "parent", "capabilities", "orbit", "assets", "provenance"],
+  "properties": {
+    "kind": { "const": "body" },
+    "id": { "$ref": "#/$defs/id" },
+    "tier": { "enum": ["major", "minor"] },
+    "displayName": { "$ref": "#/$defs/text" },
+    "parent": { "$ref": "#/$defs/id" },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requires"],
+      "properties": {
+        "requires": { "type": "array", "items": { "$ref": "#/$defs/capability" }, "uniqueItems": true },
+        "enhances": { "type": "array", "items": { "$ref": "#/$defs/capability" }, "uniqueItems": true }
+      }
+    },
+    "equatorialRadiusM": { "type": "number", "exclusiveMinimum": 0 },
+    "polarRadiusM": { "type": "number", "exclusiveMinimum": 0 },
+    "gravitationalParameterM3S2": { "type": "number", "exclusiveMinimum": 0 },
+    "orbit": { "$ref": "#/$defs/model" },
+    "rotation": { "$ref": "#/$defs/model" },
+    "appearance": {
+      "type": "object",
+      "properties": {
+        "presentation": { "enum": ["sphere", "ellipsoid"] },
+        "albedo": { "type": "array", "minItems": 3, "maxItems": 3, "items": { "type": "number", "minimum": 0, "maximum": 1 } },
+        "textureID": { "type": "string", "minLength": 1 },
+        "photometry": { "$ref": "#/$defs/model" }
+      }
+    },
+    "assets": { "type": "array", "items": { "$ref": "#/$defs/imageAsset" } },
+    "layers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "version"],
+        "properties": {
+          "type": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+          "version": { "type": "string", "pattern": "^[0-9]+$" },
+          "params": { "type": "object" },
+          "assets": { "type": "array", "items": { "$ref": "#/$defs/imageAsset" } }
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["sources", "attribution", "licence", "modelVersion", "accuracy", "coverage"],
+      "properties": {
+        "sources": { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^https?://" } },
+        "attribution": { "$ref": "#/$defs/text" },
+        "licence": { "$ref": "#/$defs/text" },
+        "modelVersion": { "$ref": "#/$defs/text" },
+        "accuracy": { "$ref": "#/$defs/text" },
+        "coverage": { "$ref": "#/$defs/text" }
+      }
+    }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "text": { "type": "string", "pattern": "\\S" },
+    "capability": { "type": "string", "pattern": "^[a-z0-9-]+/[0-9]+$" },
+    "model": {
+      "type": "object",
+      "required": ["model", "version"],
+      "properties": {
+        "model": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "version": { "type": "string", "pattern": "^[0-9]+$" }
+      }
+    },
+    "imageAsset": {
+      "type": "object",
+      "required": ["id", "path", "format", "width", "height", "byteLimit", "sha256", "required"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+        "path": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+$" },
+        "format": { "enum": ["jpeg", "png"] },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "byteLimit": { "type": "integer", "minimum": 1 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "required": { "type": "boolean" },
+        "role": { "type": "string" }
+      }
+    }
+  }
+}

@@ -2,8 +2,8 @@
 
 Schema version 1.
 
-A record is a single JSON object in `content/<kind>/<id>/record.json`, at most 256 KB.
-`content/index.json` is at most 64 KB.
+A record is a single JSON object in `content/<kind>/<id>/record.json`.
+There is no limit on the number of entries or the size of the index; review is the limit.
 
 ## Identity
 
