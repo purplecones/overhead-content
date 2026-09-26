@@ -28,6 +28,7 @@ You still read the result, test it on your phone, and sign the pull request.
    [docs/schema.md](docs/schema.md) is the field reference.
 
 4. **Add your assets** into the same directory and declare them in the record's `assets` array.
+   A body texture is a JPEG, `texture.jpg`, 2048 x 1024 pixels or another power-of-two size no larger than that, at most 16 MiB.
    Write the entry's `README.md`: sources, attribution and licence.
    Assets must be public domain, CC0, CC BY or CC BY-SA.
 
@@ -36,6 +37,7 @@ You still read the result, test it on your phone, and sign the pull request.
    Continuous integration runs the same two commands on your pull request.
 
 6. **Test it in the app** by pointing Overhead at your fork or branch. See the README.
+   Current app builds fail every body at once when one body record breaks a rule, so do not open a pull request for a body until `validate.py` is clean.
 
 7. **Open the pull request.** Describe where each number and each asset came from.
 
@@ -54,7 +56,10 @@ You still read the result, test it on your phone, and sign the pull request.
 They cost more to draw, so make one only when you have the radii and a real texture.
 
 `minor` bodies are admitted into the catalogue but not drawn: the app has no minor-body rendering yet, only a reserved place for when it does.
-They cost almost nothing to admit, so there can be very many of them, but add one only when the person accepts that it will not appear on screen yet.
+Add one only when the person accepts that it will not appear on screen yet.
+
+Current app builds accept at most 14 major bodies and 64 body records in all, and `validate.py` enforces those limits.
+They will lift in a later app release.
 
 Tier is a description of what the record supports, not a request.
 A record that declares `major` must supply what a major body needs - real radii and a texture - and is rejected if it does not.
@@ -82,6 +87,7 @@ To name an eclipse, add its date to `TITLES` in that script and rerun it.
 ## Adding a craft model
 
 1. Export a `.glb` with Y up and the nose or bow along -Z, positions and normals only, colours in the material.
+   From Blender, point the nose along Blender's +Y and export with `+Y Up`.
 2. Create `content/craft/<domain>/<id>/` with `model.glb`, a `record.json` copied from `craft/aircraft/peregrine`, and a `README.md` naming the author, the source URL and the licence.
 3. Set `dimensions` to the real vehicle's length and span in metres, and `matches` to the classes or types it stands for.
 4. Add `<id>` to `content/index.json` under `craft/<domain>`, then stamp and validate.
@@ -102,9 +108,8 @@ Transit feed records track an agency's live vehicle positions and follow their o
    The secret name must start with `TRANSIT_KEY_`, followed only by `A-Z`, `0-9`, and underscore.
    The maintainer adds the actual value as a Worker secret of that exact name once the record is merged; until then the feed is admitted but dormant, reported as `awaiting-secret`.
 
-4. **Test it.** Run `npm run transit:try -- path/to/record.json` in the Overhead repository.
-   It validates the record, fetches its live feeds once, and prints what the ingest would commit.
-   Paste its output into the pull request.
+4. **Test it.** Fetch each feed URL in the record once and paste each URL's HTTP status code and size into the pull request, for example from `curl -sS -o /dev/null -w '%{http_code} %{size_download}\n' <url>`.
+   The maintainer runs the ingest's own check, `npm run transit:try`, during review; it lives in the app's private repository.
 
 5. **Cite the licence and credit exactly as the agency states them.** A feed nobody can credit is not admitted.
 

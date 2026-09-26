@@ -6,6 +6,7 @@ A craft record supplies the 3D model the app draws for a class of aircraft, vess
 The live feeds decide where each craft is; the record decides only what it looks like.
 
 `content/craft/<domain>/<id>/record.json` beside `model.glb` and a `README.md`, checked by `schema/craft.schema.json` and `scripts/validate.py`.
+The app release that draws craft from this repository has not shipped yet, so a phone preview does not show a model; `scripts/validate.py` is the check until it does.
 The domains are `aircraft`, `vessels`, `satellites` and `transit`.
 
 ## Fields
@@ -41,11 +42,11 @@ Two records may not claim the same type, and a domain has at most one default; t
 - glTF 2.0 binary (`.glb`), one buffer, triangle meshes with positions and normals, no textures.
   Colour comes from each material's `baseColorFactor`.
 - Y is up and the nose, bow or direction of travel points along -Z.
-  Export from Blender with `+Y Up` and the model facing -Y in Blender's own frame.
+  Export from Blender with `+Y Up` and the model facing +Y in Blender's own frame: the glTF exporter maps Blender (x, y, z) to glTF (x, z, -y), so Blender's +Y becomes glTF's -Z.
 - Authored units do not matter: the app scales the model uniformly so its extent along Z equals `dimensions.length`.
 - Keep it as light as it can be while reading well at a few hundred pixels.
   There is no vertex or byte limit, but a phone draws dozens of these at once, so a heavy model costs everyone frames.
-- `python3 scripts/validate.py content` mirrors the app's loader (`GlobeGLB.swift`, `GlobeAircraftAsset.swift`): a model it accepts loads on the phone, and a model it rejects fails to load there too, though the message on screen is the app's own, not this script's.
+- `python3 scripts/validate.py content` mirrors the structural checks of the app's model loader (`GlobeGLB.swift`, `GlobeAircraftAsset.swift`), so a model it rejects would fail to load in the app too.
 
 ## Licence
 

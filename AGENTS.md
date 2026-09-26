@@ -10,11 +10,17 @@ Every number and every file must be traceable to a source the reviewer can open,
 If you cannot name the source, do not write the value.
 If you cannot name the licence, do not add the file.
 
+## Never edit the rules
+
+A content pull request changes only `content/`.
+Do not edit `scripts/`, `schema/` or `.github/`, even to make the validator pass.
+If the validator seems wrong, leave it alone and say so in the pull request, quoting its output; the maintainer decides.
+
 ## Repository map
 
 ```
 content/index.json                         which entries exist, per kind, in display order
-content/bodies/<id>/                       planets, moons, asteroids: record.json, texture.jpg or texture.png, README.md
+content/bodies/<id>/                       planets, moons, asteroids: record.json, texture.jpg, README.md
 content/events/solar-eclipses/<id>/        eclipses the app lists: record.json, README.md
 content/craft/<domain>/<id>/               3D models: record.json, model.glb, README.md
 content/transit-feeds/<id>/                GTFS-realtime feeds the backend ingests: record.json, README.md
@@ -45,7 +51,8 @@ The order of ids under `bodies` is the on-screen order; never sort that array.
    `validate.py` prints `path: problem`; fix each one and rerun until it prints nothing and exits 0.
 5. Write the entry's `README.md`: what it is, each source as a link, the licence, and the attribution the licence requires.
 6. Commit with a message such as `feat(bodies): add Ceres` and open a pull request using the template.
-   Tell the person how to test it on their phone before the review: open `overhead://content?source=https://github.com/<owner>/overhead-content/tree/<branch>` on the phone, or paste that GitHub URL under Options, Content.
+   For a body, tell the person how to test it on their phone before the review: open `overhead://content?source=https://github.com/<owner>/overhead-content/tree/<branch>` on the phone, or paste that GitHub URL under Options, Content.
+   The app release that reads events and craft from this repository has not shipped yet, so a phone preview currently shows bodies only; for events and craft, `validate.py` is the check until then.
 
 One entry per pull request unless the entries only make sense together.
 
@@ -65,11 +72,17 @@ Minor-tier records, and a `legacy-lunar-schlyter` orbit for any parent but Earth
 - Rotation from NAIF `pck00011.tpc`, radii and GM from JPL or NSSDC fact sheets.
   Take all radii from one source.
 - Textures: NASA, USGS Astrogeology, or Solar System Scope (CC BY 4.0) are safe.
-  Equirectangular, 2:1, JPEG or PNG.
+  Equirectangular, 2:1, a JPEG named `texture.jpg` with `"format": "jpeg"`, 2048 x 1024 pixels (width and height must be powers of two, at most 2048 x 1024), at most 16 MiB.
+  Downscale a larger source map; the app rejects PNG textures and larger sizes.
+- `appearance.absoluteMagnitude` is required for `lambert` and `lunar` photometry: the body's V(1,0), for example from its NSSDC fact sheet.
+- `presentation` is `sphere` only when the two radii are equal, otherwise `ellipsoid`.
 - `tier` is `major` when you have a texture; radii and rotation are required either way now, so texture is the only thing tier still depends on.
   Without a texture, use `minor`.
+  A major body's `parent` must be `sun`, `earth`, or another major body in the index.
 - `provenance.accuracy` must state what the model omits and how large the error is.
-- `validate.py` does not run the app's own admission checks (exact orbit math, the major-body limit); a clean run is necessary but not sufficient, so telling the person to test a body on their phone before merging is required, not optional.
+- Current app builds accept at most 14 major bodies and 64 body records, and fail every body at once when one body record breaks a rule.
+  `validate.py` mirrors those rules, including the orbit and rotation evaluation at both validity endpoints, so treat any problem it reports on a body as blocking.
+  It cannot judge whether the body looks right, so still ask the person to check it on their phone before merging.
 - Reference: `docs/schema.md`.
 
 ### Solar eclipses (`content/events/solar-eclipses/`)
@@ -89,13 +102,15 @@ Minor-tier records, and a `legacy-lunar-schlyter` orbit for any parent but Earth
 - The model is a `.glb`: glTF 2.0 binary, triangles with positions and normals, no textures, colours in `baseColorFactor`.
 - Y up, nose or bow along -Z.
   If the person's model faces another way, rotate it in the exporter, not in the record.
+  In Blender, the nose points along Blender's +Y and the model is exported with `+Y Up`: the glTF exporter maps Blender (x, y, z) to glTF (x, z, -y).
 - `dimensions` are the real vehicle's length and span in metres, from the manufacturer or Wikipedia with the page cited.
 - `matches.classes` come from the domain's list in `docs/craft.md`; `matches.types` are ICAO designators (aircraft), MMSI (vessels), or NORAD numbers (satellites).
   Set `default: true` only if the domain has none, and the person wants this model for everything unmatched.
 - `licence` must be one of `CC0-1.0`, `CC-BY-4.0`, `CC-BY-SA-4.0`, `MIT`, `public-domain`, and the README must name the author.
   NASA's 3D resources are `public-domain`.
   Sketchfab models are acceptable only under CC0 or CC BY, downloaded from the model's own page.
-- `validate.py` mirrors the app's loader's structural checks; a model that passes here loads on the phone.
+- `validate.py` mirrors the structural checks of the app's model loader.
+  The app release that draws craft from this repository has not shipped yet, so there is no phone preview for a model; `validate.py` is the check until then.
 - Reference: `docs/craft.md`.
 
 ### Transit feeds (`content/transit-feeds/`)
@@ -103,7 +118,8 @@ Minor-tier records, and a `legacy-lunar-schlyter` orbit for any parent but Earth
 - Find the agency's GTFS-realtime vehicle positions and trip updates URLs, static GTFS URL, and data licence page.
 - Never put a key's value in a record.
   A key is named as `{ "secret": "TRANSIT_KEY_<NAME>", "query": "<param>" }` (or `"header"`); the maintainer sets the value.
-- Test with `npm run transit:try -- <record>` in the Overhead app repository if it is available, and paste the output into the pull request.
+- Fetch each feed URL in the record once (for example with `curl -sS -o /dev/null -w '%{http_code} %{size_download}\n' <url>`) and paste each URL's status code and size into the pull request.
+  The maintainer runs the ingest's own check, `npm run transit:try`, during review; it lives in a private repository.
 - Reference: `docs/transit-feeds.md`.
 
 ## What gets a pull request closed
@@ -113,6 +129,7 @@ Minor-tier records, and a `legacy-lunar-schlyter` orbit for any parent but Earth
 - Hand-typed digests, or a record `stamp.py --check` reports as stale.
 - A sorted `bodies` array, an em dash, or JSON not indented with two spaces.
 - More than one unrelated entry in one pull request.
+- Any change to `scripts/`, `schema/` or `.github/` in a content pull request.
 
 ## Pull request description
 

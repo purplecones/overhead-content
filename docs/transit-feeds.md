@@ -104,7 +104,7 @@ A feed nobody can credit is not admitted.
 
 ## Admission rules
 
-These are applied identically by `lib/transit/record.js` in the Worker, the pack build, `npm run transit:try`, and the tests.
+These are applied identically by `lib/transit/record.js` in the Worker, the pack build, `npm run transit:try`, and the tests, all of which live in the app's private repository.
 
 - Declared `kind` and `id` must match the path.
 - An unknown field at any level rejects the record; its siblings are unaffected.
@@ -112,6 +112,5 @@ These are applied identically by `lib/transit/record.js` in the Worker, the pack
 - A `key.secret` the Worker does not have leaves the record admitted but dormant, reported as `awaiting-secret`.
 - Licence `name`, `url`, and `credit` are required; a feed nobody can credit is not admitted.
 
-Run `npm run transit:try -- path/to/record.json` in the Overhead repository before opening a pull request.
-It validates the record, fetches its live feeds once, and prints what the ingest would commit.
-Paste its output into the pull request.
+Before opening a pull request, fetch each feed URL in the record once and paste each URL's HTTP status code and size into the pull request, for example from `curl -sS -o /dev/null -w '%{http_code} %{size_download}\n' <url>`.
+The maintainer runs `npm run transit:try` during review; it validates the record, fetches its live feeds once, and prints what the ingest would commit.

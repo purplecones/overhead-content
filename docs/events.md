@@ -10,6 +10,7 @@ Each event type is its own folder under `content/events/` and its own key in `co
 `content/events/solar-eclipses/<id>/record.json`, checked by `schema/solar-eclipse.schema.json`.
 
 The repository decides which eclipses the app lists.
+The app release that reads events from this repository has not shipped yet, so a phone preview does not show them; `scripts/validate.py` is the check until it does.
 The app does not trust the record's numbers for anything it draws: it runs its own eclipse search from `greatest`, and admits the record only if its own eclipse falls within 10 minutes of `greatest` with a matching type.
 A record that disagrees is skipped and the reason shows on the app's Content screen.
 

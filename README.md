@@ -1,6 +1,6 @@
 # Overhead content
 
-Community content for [Overhead](https://github.com/purplecones/overhead), a native iOS aircraft, vessel and sky viewer.
+Community content for Overhead, a native iOS aircraft, vessel and sky viewer.
 
 This repository is the catalogue the app reads.
 Adding a planet, a moon, an asteroid or a spacecraft to Overhead means opening a pull request here, not shipping a new build of the app.
@@ -11,7 +11,7 @@ The app fetches the latest release of this repository, so merged content reaches
 ```
 content/
   index.json                       what entries exist, per kind, in display order
-  bodies/<id>/                     planets, moons and asteroids: record.json, texture.jpg or texture.png, README.md
+  bodies/<id>/                     planets, moons and asteroids: record.json, texture.jpg, README.md
   events/solar-eclipses/<id>/      the eclipses the app lists: record.json, README.md
   craft/<domain>/<id>/             3D models for aircraft, vessels, satellites and transit: record.json, model.glb, README.md
   transit-feeds/<id>/              live transit feeds the backend ingests: record.json, README.md
@@ -25,26 +25,31 @@ AGENTS.md                          instructions for a coding agent making a cont
 
 `index.json` names the entries; a kind's key is its folder path, and each entry is a directory holding a `record.json`, a `README.md`, and the assets the record declares.
 The record filename is the same across every kind, so a new kind is a new folder, a new schema and a new validator rule rather than a change to the app.
-There is no limit on how many entries a kind holds; review is the limit.
+Current app builds limit bodies: at most 14 major bodies and 64 body records, each `record.json` at most 256 KB, each asset at most 16 MiB and 64 MiB of body assets in all, with `index.json` at most 64 KB.
+`scripts/validate.py` enforces these limits, and they will lift in a later app release.
 
 ## How the app reads it
 
 The app reads `index.json`, then `content/<kind>/<id>/record.json` for each entry the index lists, in the order the index lists them.
+Current app builds read only `bodies`; the other kinds reach the app in a later release.
 That order is load-bearing: it becomes the on-screen order of the bodies.
 Alphabetising the array silently reorders what people see.
 
 Each record declares the capabilities it needs.
-The app admits the records it can draw and skips the ones it cannot, with a reason, rather than rejecting the whole catalogue.
+A record that requires a capability the installed app does not implement is skipped, with a reason, and the rest are drawn.
 That is what lets this repository move ahead of the app: a record that asks for a feature the installed version does not have is skipped by old builds and drawn by new ones, without the record changing.
 
 An unknown kind is ignored rather than treated as an error, for the same reason.
 
-Every kind fails safe on its own terms.
-An eclipse record is admitted only if the app's own calculation agrees with it; a craft model only if it parses; a body only if the app implements what it requires.
+A capability problem - a requirement the app does not implement, a model the record uses without listing it, or a layer that fails - is the only body defect current builds skip safely, by skipping that one record or dropping that one layer.
+Any other body defect - a record that does not decode, an out-of-range number, a texture of the wrong format or size, a limit exceeded - fails the whole package on current builds, so every contributed body disappears for everyone.
+That is why `scripts/validate.py` mirrors the app's body rules one for one, and why it must pass before a body is merged.
+The app release that reads events and craft is designed to fail safe per record: an eclipse record admitted only if the app's own calculation agrees with it, a craft model only if it parses.
 
 ## Testing your change before you open a pull request
 
 You do not need to build the app.
+Current app builds preview bodies only; the app release that reads events and craft from this repository has not shipped yet, so for those `scripts/validate.py` is the check until it does.
 Fork this repository, push your branch, and point the app at it: paste your fork, branch or pull request URL under Options, Content, or open this link on the phone:
 
     overhead://content?source=https://github.com/<owner>/overhead-content/tree/<branch>
@@ -62,7 +67,7 @@ Clone your fork, open it in Claude Code, Codex, Cursor or any agent that reads `
     Add the dwarf planet Ceres as a major body, with its Dawn texture and sources.
 
 The agent finds the procedure, the field references and the two commands to run in `AGENTS.md`, and stops when `scripts/validate.py` is clean.
-For a body, that is not the finish line: the validator cannot see everything the app computes when it draws one, so check the result on your phone before you open the pull request it prepared.
+For a body, that is not the finish line: the validator checks every rule the app applies, but it cannot tell whether the body looks right, so check the result on your phone before you open the pull request it prepared.
 
 ## Contributing
 
