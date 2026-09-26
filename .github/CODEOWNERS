@@ -1,0 +1,6 @@
+# The validator, the schemas and CI decide what reaches every phone, so a
+# change to them needs the maintainer's review; content pull requests do not
+# touch these paths (see AGENTS.md).
+/scripts/ @purplecones
+/schema/ @purplecones
+/.github/ @purplecones
