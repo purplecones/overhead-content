@@ -1,0 +1,31 @@
+{
+  "dimensions": {
+    "length": 12.0,
+    "span": 2.55
+  },
+  "id": "starter-bus",
+  "kind": "craft",
+  "licence": "CC0-1.0",
+  "matches": {
+    "classes": [
+      "bus"
+    ],
+    "default": false,
+    "types": []
+  },
+  "model": {
+    "byteLimit": 12796,
+    "format": "glb",
+    "id": "model",
+    "path": "model.glb",
+    "required": true,
+    "sha256": "73f744df98f0b6b809be8540816a1577e9232370554c6d3060ce61fb0690d13a"
+  },
+  "name": "City bus (starter)",
+  "provenance": {
+    "attribution": "City bus (starter), original work by the Overhead project",
+    "sources": [
+      "https://github.com/purplecones/overhead-content/tree/main/content/craft/transit/starter-bus"
+    ]
+  }
+}

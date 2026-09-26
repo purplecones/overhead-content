@@ -50,7 +50,7 @@ The app release that reads craft is designed to fail safe per record too: a craf
 ## Testing your change before you open a pull request
 
 You do not need to build the app.
-The app previews bodies and events; the app release that reads craft from this repository has not shipped yet, so for craft `scripts/validate.py` is the check until it does.
+The app previews bodies, events and craft models; satellite models are admitted but not drawn yet.
 Fork this repository, push your branch, and point the app at it: paste your fork, branch or pull request URL under Options, Content, or open this link on the phone:
 
     overhead://content?source=https://github.com/<owner>/overhead-content/tree/<branch>
