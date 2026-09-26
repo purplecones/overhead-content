@@ -38,12 +38,15 @@ MINIMAL_BODY = {
             "poleRightAscension": 268.056595, "primeMeridian": 284.95, "rotationRate": 870.536,
         },
     },
-    # Minimal but decodable: presentation, albedo, albedoScale and photometry
-    # are non-optional on CelestialCatalogueAppearance for every tier.
+    # Minimal but admissible: presentation, albedo, albedoScale and photometry
+    # are non-optional on CelestialCatalogueAppearance for every tier, and
+    # CelestialCatalogue.validateAppearance requires absoluteMagnitude for
+    # lambert photometry.
     "appearance": {
         "presentation": "ellipsoid",
         "albedo": [0.1, 0.1, 0.1],
         "albedoScale": 1,
+        "absoluteMagnitude": 3.34,
         "photometry": {"model": "lambert", "version": "1"},
     },
     "assets": [],

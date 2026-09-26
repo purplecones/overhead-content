@@ -31,6 +31,7 @@ except ImportError:  # pragma: no cover
     print("validate.py needs jsonschema: python3 -m pip install -r requirements-dev.txt", file=sys.stderr)
     raise SystemExit(2)
 
+import celestial
 import glb
 
 RECORD = "record.json"
@@ -84,6 +85,10 @@ class Kind:
         return []
 
     def check(self, entry: Entry, records: list[Entry], root: Path) -> list[Problem]:
+        return []
+
+    def check_kind(self, entries: list[Entry], root: Path) -> list[Problem]:
+        """Rules that span every record of the kind, reported once."""
         return []
 
 
@@ -153,6 +158,13 @@ def _convention_repr(value):
 
 
 class BodiesKind(Kind):
+    """Bodies are the one kind shipped app builds read today, and those builds
+    reject the whole package when any body record fails to decode or to be
+    admitted: one bad record removes every contributed body for every user.
+    So every rule below mirrors a check in the app (Swift names cited beside
+    each, all under ios/Overhead/ in the app repository), and a record that
+    passes here is one the app admits."""
+
     key = "bodies"
     record_kind = "body"
     schema = "body.schema.json"
@@ -184,47 +196,272 @@ class BodiesKind(Kind):
         "frame": "world-legacy",
         "timeConvention": "tt-as-utc",
     }
+    # CelestialCatalogue.validateRecordIdentities: the app owns these two.
+    PROTECTED_IDS = ("sun", "earth")
+    # CelestialCapability.implemented, minus layers (those come from
+    # CelestialLayerRegistry and are checked against the record's own lists).
+    ORBIT_CAPABILITY = {"kepler-standish-table2a": "kepler-standish-table2a/1",
+                        "legacy-lunar-schlyter": "legacy-lunar-schlyter/1"}
+    ROTATION_CAPABILITY = {"iau-linear": "iau-linear/1", "legacy-lunar-libration": "legacy-lunar-libration/1"}
+    PHOTOMETRY_CAPABILITY = {"lunar": "lunar/1", "lambert": "lambert/1", "emissive": "emissive/1"}
+
+    # Temporary shipped-build limits, bodies only. Current app builds fail the
+    # whole package past any of these; they are removed here when the app's
+    # content-kinds plan ships and lifts them in the app.
+    SHIPPED_MAX_MAJOR = 14                  # CatalogueLimits.maxMajorRecords (CelestialTree.maximumBodyCount 16 - Sun, Earth)
+    SHIPPED_MAX_RECORDS = 64                # ContentPackageFetcher.maximumRecords
+    SHIPPED_MAX_RECORD_BYTES = 256 * 1024   # CelestialContentLayout.maximumRecordBytes
+    SHIPPED_MAX_INDEX_BYTES = 64 * 1024     # CelestialContentLayout.maximumIndexBytes (the index every kind shares)
+    SHIPPED_MAX_ASSET_BYTES = 16 * 1024 * 1024    # DirectoryCelestialAssetProvider.maximumEncodedBytes
+    SHIPPED_MAX_PACKAGE_BYTES = 64 * 1024 * 1024  # ContentPackageFetcher.maximumPackageBytes (sum of body asset byteLimits)
 
     def assets_of(self, record: dict) -> list[dict]:
         assets = list(record.get("assets") or [])
         for layer in record.get("layers") or []:
-            assets.extend(layer.get("assets") or [])
+            if isinstance(layer, dict):
+                assets.extend(layer.get("assets") or [])
         return [a for a in assets if isinstance(a, dict)]
 
     def check(self, entry: Entry, records: list[Entry], root: Path) -> list[Problem]:
         record, path, problems = entry.record, rel(root, entry.record_path), []
-        asset_ids = {a.get("id") for a in self.assets_of(record)}
+
+        def add(message: str) -> None:
+            problems.append(Problem(path, message))
+
+        if record.get("id") in self.PROTECTED_IDS:
+            # CelestialCatalogue.validateRecordIdentities (protectedAnchorOverride)
+            add(f"id {record.get('id')!r} is reserved: the app draws the Sun and Earth itself")
+        top_assets = [a for a in (record.get("assets") or []) if isinstance(a, dict)]
+        asset_ids = {a.get("id") for a in top_assets}
         texture = (record.get("appearance") or {}).get("textureID")
         if texture is not None and texture not in asset_ids:
-            problems.append(Problem(path, f"appearance.textureID {texture!r} names no asset"))
-        # equatorialRadiusM, polarRadiusM and rotation are schema-required for
-        # every tier now (the app decodes them for both); a texture is the
-        # one thing that still distinguishes major from minor.
+            # CelestialCatalogue.resolveAssets (unknownTextureID); layer assets never count.
+            add(f"appearance.textureID {texture!r} names no asset")
+        # CelestialTier.validate: a major body needs a texture (radii are schema-positive).
         if record.get("tier") == "major" and not texture:
-            problems.append(Problem(path, "a major body needs appearance.textureID"))
-        orbit = record.get("orbit") or {}
-        model = orbit.get("model")
+            add("a major body needs appearance.textureID")
+        paths = [a.get("path") for a in top_assets]
+        for duplicate in sorted({p for p in paths if isinstance(p, str) and paths.count(p) > 1}):
+            # CelestialCatalogue.resolveAssets: "duplicate asset path"
+            add(f"two assets share the path {duplicate!r}")
+
+        # The numeric rules need a well-formed record; schema problems are
+        # reported centrally by validate().
+        if schema_validator(self.schema).is_valid(record):
+            self.check_physics(record, add)
+            self.check_capabilities(record, add)
+        return problems
+
+    def check_physics(self, record: dict, add) -> None:
+        eq, polar = record["equatorialRadiusM"], record["polarRadiusM"]
+        # CelestialCatalogue.validatePhysical: polar <= equatorial (bounds are in the schema).
+        if polar > eq:
+            add("polarRadiusM must not exceed equatorialRadiusM")
+        appearance = record["appearance"]
+        # CelestialCatalogue.validateAppearance: presentation against the radii.
+        if appearance["presentation"] == "sphere" and eq != polar:
+            add("presentation sphere needs equatorialRadiusM equal to polarRadiusM; use ellipsoid for a flattened body")
+        if appearance["presentation"] == "ellipsoid" and not polar < eq:
+            add("presentation ellipsoid needs polarRadiusM below equatorialRadiusM; use sphere for equal radii")
+        # CelestialCatalogue.validateAppearance / requiredMagnitude: lunar and
+        # lambert need a finite absoluteMagnitude; emissive may omit it.
+        if appearance["photometry"]["model"] in ("lunar", "lambert") and "absoluteMagnitude" not in appearance:
+            add(f"appearance.absoluteMagnitude is required for {appearance['photometry']['model']} photometry "
+                "(the body's V(1,0), for example from the NSSDC fact sheet)")
+
+        orbit = record["orbit"]
+        model = orbit["model"]
         if model == "kepler-standish-table2a":
             for field, expected in self.KEPLER_ORBIT_CONVENTIONS.items():
                 if orbit.get(field) != expected:
-                    problems.append(Problem(path, f"orbit.{field} must be {_convention_repr(expected)}"))
+                    add(f"orbit.{field} must be {_convention_repr(expected)}")
         elif model == "legacy-lunar-schlyter":
             for field, expected in self.LEGACY_LUNAR_ORBIT_CONVENTIONS.items():
                 if orbit.get(field) != expected:
-                    problems.append(Problem(path, f"orbit.{field} must be {_convention_repr(expected)}"))
+                    add(f"orbit.{field} must be {_convention_repr(expected)}")
+            # CelestialCatalogue.validateAdapterConstraints
             if record.get("parent") != "earth":
-                problems.append(Problem(path, "legacy-lunar-schlyter only works for a body whose parent "
-                                              "is earth"))
-        rotation = record.get("rotation") or {}
-        rotation_model = rotation.get("model")
+                add("legacy-lunar-schlyter only works for a body whose parent is earth")
+        # CelestialCatalogue.validityRange, called by validateOrbit.
+        validity = celestial.validity_problem(orbit["validityStartJD"], orbit["validityEndJD"])
+        if validity:
+            add(f"orbit: {validity}")
+        elif model == "kepler-standish-table2a":
+            # GenericKeplerOrbit.init, then heliocentricPosition at both endpoints (validateOrbit).
+            elements = orbit["elements"]
+            problem = celestial.kepler_elements_problem(elements)
+            if problem is None:
+                for jd in (orbit["validityStartJD"], orbit["validityEndJD"]):
+                    problem = celestial.kepler_position_problem(elements, jd)
+                    if problem:
+                        break
+            if problem:
+                add(problem)
+
+        rotation = record["rotation"]
+        rotation_model = rotation["model"]
         if rotation_model == "iau-linear":
             for field, expected in self.IAU_LINEAR_ROTATION_CONVENTIONS.items():
                 if rotation.get(field) != expected:
-                    problems.append(Problem(path, f"rotation.{field} must be {_convention_repr(expected)}"))
+                    add(f"rotation.{field} must be {_convention_repr(expected)}")
         elif rotation_model == "legacy-lunar-libration":
             for field, expected in self.LEGACY_LUNAR_ROTATION_CONVENTIONS.items():
                 if rotation.get(field) != expected:
-                    problems.append(Problem(path, f"rotation.{field} must be {_convention_repr(expected)}"))
+                    add(f"rotation.{field} must be {_convention_repr(expected)}")
+        # CelestialCatalogue.validityRange, called by validateRotation.
+        validity = celestial.validity_problem(rotation["validityStartJD"], rotation["validityEndJD"])
+        if validity:
+            add(f"rotation: {validity}")
+        elif rotation_model == "iau-linear":
+            # IAURotation.init, then orientation and spin at both endpoints (validateRotation).
+            coefficients = rotation["coefficients"]
+            problem = celestial.iau_coefficients_problem(coefficients)
+            if problem is None:
+                for jd in (rotation["validityStartJD"], rotation["validityEndJD"]):
+                    problem = celestial.iau_endpoint_problem(coefficients, jd)
+                    if problem:
+                        break
+            if problem:
+                add(problem)
+
+    def check_capabilities(self, record: dict, add) -> None:
+        """CelestialCapability.rejection: a record that uses a model it does not
+        list in requires, or carries a layer listed in neither list, is skipped
+        by the app. That is not package-wide, but the body silently never
+        appears, so it is reported."""
+        requires = set(record["capabilities"]["requires"])
+        listed = requires | set(record["capabilities"].get("enhances") or [])
+        used = [self.ORBIT_CAPABILITY[record["orbit"]["model"]]]
+        if record["tier"] == "major":
+            used.append(self.ROTATION_CAPABILITY[record["rotation"]["model"]])
+            used.append(self.PHOTOMETRY_CAPABILITY[record["appearance"]["photometry"]["model"]])
+        for capability in used:
+            if capability not in requires:
+                add(f"uses {capability!r} without listing it in capabilities.requires, so the app skips the record")
+        for layer in record.get("layers") or []:
+            capability = f"{layer['type']}/{layer['version']}"
+            if capability not in listed:
+                add(f"carries layer {capability!r} without listing it in capabilities.requires or enhances, "
+                    "so the app skips the record")
+
+    def check_kind(self, entries: list[Entry], root: Path) -> list[Problem]:
+        """Rules that span records: each is package-wide on shipped builds."""
+        problems: list[Problem] = []
+        by_id = {e.id: e for e in entries}
+        majors = [e for e in entries if e.record.get("tier") == "major"]
+        major_ids = {e.id for e in majors}
+
+        # CelestialCatalogue.resolveAssets: record asset ids are unique across the package.
+        owners: dict[str, str] = {}
+        for entry in entries:
+            for asset in entry.record.get("assets") or []:
+                if not isinstance(asset, dict) or not isinstance(asset.get("id"), str):
+                    continue
+                if asset["id"] in owners:
+                    problems.append(Problem(rel(root, entry.record_path),
+                                            f"asset id {asset['id']!r} is already used by {owners[asset['id']]}; "
+                                            "asset ids must be unique across all bodies"))
+                else:
+                    owners[asset["id"]] = entry.id
+
+        # CelestialTree.init: a major body's parent is the Sun, Earth, or another
+        # admitted major body (missingParent), with no cycles. The app does not
+        # place minor bodies in the tree yet; a minor's parent must at least be
+        # a body this repository or the app knows.
+        for entry in entries:
+            parent = entry.record.get("parent")
+            if not isinstance(parent, str):
+                continue
+            if entry.record.get("tier") == "major":
+                if parent not in self.PROTECTED_IDS and parent not in major_ids:
+                    problems.append(Problem(rel(root, entry.record_path),
+                                            f"parent {parent!r} must be sun, earth, or a major body listed under bodies"))
+            elif parent not in self.PROTECTED_IDS and parent not in by_id:
+                problems.append(Problem(rel(root, entry.record_path),
+                                        f"parent {parent!r} must be sun, earth, or a body listed under bodies"))
+        problems += self.tree_problems(majors, root)
+
+        # Temporary shipped-build limits (see the constants above).
+        index_path = root / INDEX
+        if index_path.is_file() and index_path.stat().st_size > self.SHIPPED_MAX_INDEX_BYTES:
+            problems.append(Problem(rel(root, index_path),
+                                    f"is {index_path.stat().st_size} bytes; current app builds read at most "
+                                    f"{self.SHIPPED_MAX_INDEX_BYTES} and would drop every body"))
+        if len(majors) > self.SHIPPED_MAX_MAJOR:
+            problems.append(Problem(rel(root, index_path),
+                                    f"bodies lists {len(majors)} major bodies; current app builds admit at most "
+                                    f"{self.SHIPPED_MAX_MAJOR} and would drop every body"))
+        if len(entries) > self.SHIPPED_MAX_RECORDS:
+            problems.append(Problem(rel(root, index_path),
+                                    f"bodies lists {len(entries)} records; current app builds fetch at most "
+                                    f"{self.SHIPPED_MAX_RECORDS} and would drop every body"))
+        total = 0
+        for entry in entries:
+            size = entry.record_path.stat().st_size
+            if size > self.SHIPPED_MAX_RECORD_BYTES:
+                problems.append(Problem(rel(root, entry.record_path),
+                                        f"is {size} bytes; current app builds read at most "
+                                        f"{self.SHIPPED_MAX_RECORD_BYTES} and would drop every body"))
+            layer_assets = [id(a) for layer in entry.record.get("layers") or [] if isinstance(layer, dict)
+                            for a in layer.get("assets") or []]
+            for asset in self.assets_of(entry.record):
+                limit = asset.get("byteLimit")
+                if isinstance(limit, int) and not isinstance(limit, bool):
+                    total += limit
+                    # Record textures carry this cap in the schema (validateAssetDescriptor);
+                    # the fetcher applies it to layer assets too (ContentPackageFetcher.fill).
+                    if id(asset) in layer_assets and limit > self.SHIPPED_MAX_ASSET_BYTES:
+                        problems.append(Problem(rel(root, entry.record_path),
+                                                f"asset {asset.get('id')!r} is {limit} bytes; current app builds "
+                                                f"accept at most {self.SHIPPED_MAX_ASSET_BYTES} (16 MiB) per asset"))
+        if total > self.SHIPPED_MAX_PACKAGE_BYTES:
+            problems.append(Problem(rel(root, index_path),
+                                    f"body assets total {total} bytes; current app builds fetch at most "
+                                    f"{self.SHIPPED_MAX_PACKAGE_BYTES} (64 MiB) and would drop every body"))
+        return problems
+
+    def tree_problems(self, majors: list[Entry], root: Path) -> list[Problem]:
+        """CelestialTree.init: walk majors parent-first from the Sun and Earth
+        anchors; report a cycle, and any orbit whose Hill radius, period or
+        reach overflows."""
+        problems: list[Problem] = []
+        known = {"sun": (celestial.SUN_GM, 0.0)}
+        _, earth_reach = celestial.tree_step(celestial.SUN_GM, 0.0, *celestial.LEGACY_EARTH_ORBIT, celestial.EARTH_GM)
+        known["earth"] = (celestial.EARTH_GM, earth_reach)
+        remaining = [e for e in majors if schema_validator(self.schema).is_valid(e.record)]
+        while remaining:
+            ready = [e for e in remaining if e.record["parent"] in known]
+            if not ready:
+                # What is left is either blocked by a missing parent (reported
+                # above) or on a loop (CelestialTreeError.cycle).
+                parents = {e.id: e.record["parent"] for e in remaining}
+                for entry in remaining:
+                    seen, current = set(), entry.id
+                    while current in parents and current not in seen:
+                        seen.add(current)
+                        current = parents[current]
+                    if current == entry.id:
+                        problems.append(Problem(rel(root, entry.record_path),
+                                                "parent chain loops back on itself; a body cannot orbit its own descendant"))
+                break
+            for entry in ready:
+                remaining.remove(entry)
+                record = entry.record
+                parent_gm, parent_reach = known[record["parent"]]
+                orbit = record["orbit"]
+                if orbit["model"] == "legacy-lunar-schlyter":
+                    a_m, e = celestial.LEGACY_MOON_ORBIT
+                else:
+                    elements = orbit["elements"]
+                    a_m, e = elements["semiMajorAxisAU"] * celestial.AU, elements["eccentricity"]
+                    if celestial.kepler_elements_problem(elements):
+                        continue  # already reported per record
+                problem, reach = celestial.tree_step(parent_gm, parent_reach, a_m, e,
+                                                     record["gravitationalParameterM3S2"])
+                if problem:
+                    problems.append(Problem(rel(root, entry.record_path), problem))
+                    continue
+                known[entry.id] = (record["gravitationalParameterM3S2"], reach)
         return problems
 
 
@@ -336,10 +573,35 @@ def rel(root: Path, path: Path) -> str:
     return str(path.relative_to(root.parent))
 
 
+def _reject_constant(name: str):
+    raise ValueError(f"{name} is not JSON; the app's decoder rejects it")
+
+
+def _finite_float(text: str) -> float:
+    value = float(text)
+    if not math.isfinite(value):
+        raise ValueError(f"{text} is too large for a 64-bit float; the app's decoder rejects it")
+    return value
+
+
+def _representable_int(text: str) -> int:
+    value = int(text)
+    float(value)  # raises OverflowError past the float range, as the app's decoder fails
+    return value
+
+
+def strict_json(text: str):
+    """json.loads, but refusing what Swift's JSONDecoder refuses: the NaN,
+    Infinity and -Infinity literals Python accepts by default, and numbers
+    outside the 64-bit float range, which Python would turn into inf."""
+    return json.loads(text, parse_constant=_reject_constant, parse_float=_finite_float,
+                      parse_int=_representable_int)
+
+
 def load_json(path: Path, root: Path, problems: list[Problem]):
     try:
-        return json.loads(path.read_text())
-    except (OSError, ValueError) as error:
+        return strict_json(path.read_text())
+    except (OSError, ValueError, OverflowError) as error:
         problems.append(Problem(rel(root, path), f"not valid JSON: {error}"))
         return None
 
@@ -405,6 +667,11 @@ def check_identity(entry: Entry, root: Path) -> list[Problem]:
 def check_files(entry: Entry, root: Path) -> list[Problem]:
     kind = KINDS[entry.kind]
     problems = []
+    # The app's asset provider rejects any symlink in a package path
+    # (DirectoryCelestialAssetProvider.data), and a link can point outside
+    # the repository, so entries hold regular files only.
+    if entry.directory.is_symlink():
+        return [Problem(rel(root, entry.directory), "is a symlink; entries must be real directories")]
     if not (entry.directory / README).is_file():
         problems.append(Problem(rel(root, entry.directory), f"{README} is missing"))
     declared = {RECORD, README}
@@ -415,12 +682,16 @@ def check_files(entry: Entry, root: Path) -> list[Problem]:
                                     f"asset path {path!r} must be a plain filename in the entry directory"))
             continue
         declared.add(path)
+        if (entry.directory / path).is_symlink():
+            continue  # reported below with the directory listing
         if not (entry.directory / path).is_file():
             problems.append(Problem(rel(root, entry.record_path), f"declares {path} but the file is missing"))
     for child in sorted(entry.directory.iterdir()):
         if child.name == ".DS_Store":
             continue
-        if child.is_dir():
+        if child.is_symlink():
+            problems.append(Problem(rel(root, child), "is a symlink; entries hold regular files only"))
+        elif child.is_dir():
             problems.append(Problem(rel(root, child), "entries hold files only, no subdirectories"))
         elif child.name not in declared:
             problems.append(Problem(rel(root, child), f"not declared by {RECORD}"))
@@ -440,6 +711,8 @@ def validate(root: Path) -> list[Problem]:
             problems += schema_problems(entry.record, kind.schema, rel(root, entry.record_path))
         problems += check_files(entry, root)
         problems += kind.check(entry, by_kind[entry.kind], root)
+    for key, kind in KINDS.items():
+        problems += kind.check_kind(by_kind.get(key, []), root)
     return problems
 
 
