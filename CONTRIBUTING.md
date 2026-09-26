@@ -24,7 +24,7 @@ You still read the result, test it on your phone, and sign the pull request.
 2. **Create the entry directory**: `content/bodies/<id>/`, and add `<id>` to `content/index.json` under `bodies`, at the position you want it shown.
    The id is lowercase, hyphen-separated, and stable forever - it is how the app identifies the body across releases.
 
-3. **Write `record.json`.** Copy an existing record of the same tier as your starting point rather than writing one from scratch.
+3. **Write `record.json`.** Copy a planet record (`jupiter`, for example) as your starting point rather than writing one from scratch; no shipped record is `minor` tier yet, so a planet is the nearest real example either way.
    [docs/schema.md](docs/schema.md) is the field reference.
 
 4. **Add your assets** into the same directory and declare them in the record's `assets` array.

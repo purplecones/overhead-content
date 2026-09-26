@@ -56,16 +56,36 @@ Take all axes of an ellipsoid from one source so the flattening stays self-consi
   "distanceUnit": "au",
   "angleUnit": "deg",
   "timeConvention": "tt-as-utc",
-  "validityStartJD": 625673.5,
-  "validityEndJD": 2816787.5,
-  "elements": { }
+  "validityStartJD": 625295.0,
+  "validityEndJD": 2816795.0,
+  "elements": {
+    "semiMajorAxisAU": 1.52371243,
+    "eccentricity": 0.09336511,
+    "inclinationDeg": 1.85181869,
+    "longitudeOfAscendingNodeDeg": 49.71320984,
+    "longitudeOfPerihelionDeg": -23.91744784,
+    "meanLongitudeDeg": -4.56813164,
+    "rateSemiMajorAxis": 9.7e-7,
+    "rateEccentricity": 0.00009149,
+    "rateInclination": -0.00724757,
+    "rateMeanLongitude": 19140.29934243,
+    "ratePerihelion": 0.45223625,
+    "rateNode": -0.26852431
+  }
 }
 ```
 
-Distances are in AU with rates per Julian century.
+Distances are in AU with rates per Julian century (the example above is the shipped Mars record).
 Validity is numeric Julian-day endpoints; the app parses no dates.
+All twelve `elements` fields are required; there is no default for a missing rate.
 
-`legacy-lunar-schlyter/1` selects the app's built-in lunar solver and carries no elements.
+Producing elements: for a planet, take Table 2a's own linear fit directly from `https://ssd.jpl.nasa.gov/planets/approx_pos.html`.
+For anything else - a moon, an asteroid, a dwarf planet - use JPL Horizons (`https://ssd.jpl.nasa.gov/horizons/`) instead: look up osculating elements at epoch JD 2451545.0 TDB, frame ICRF/ecliptic J2000, centred on the parent (`@10` for the Sun, or the planet for a moon, for example `@599` for Jupiter), in au and degrees.
+Map Horizons' output onto the fields above: `semiMajorAxisAU` = A, `eccentricity` = EC, `inclinationDeg` = IN, `longitudeOfAscendingNodeDeg` = OM, `longitudeOfPerihelionDeg` = OM + W, `meanLongitudeDeg` = OM + W + MA normalised to 0-360, `rateMeanLongitude` = N (deg/day) x 36525; leave every other rate at 0 unless a published secular fit exists for that body.
+Osculating elements drift outside a short window, so keep `validityStartJD`/`validityEndJD` narrow - plus or minus 50 years around J2000 is a reasonable default - and say so in `provenance.accuracy`.
+Do not paste JPL Small-Body Database (`https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html`) values in directly: SBDB's epoch is rarely J2000, so its numbers need re-deriving from Horizons at JD 2451545.0 first.
+
+`legacy-lunar-schlyter/1` selects the app's built-in lunar solver and carries no elements; it only works for a body whose parent is Earth.
 
 ## Rotation
 
@@ -75,14 +95,20 @@ Validity is numeric Julian-day endpoints; the app parses no dates.
 "rotation": {
   "model": "iau-linear",
   "version": "1",
+  "epochJD": 2451545.0,
   "frame": "equatorial-j2000",
+  "angleUnit": "deg",
+  "timeConvention": "tt-as-utc",
+  "validityStartJD": 625295.0,
+  "validityEndJD": 2816795.0,
   "coefficients": {
-    "poleRightAscension": 0.0, "poleDeclination": 0.0, "primeMeridian": 0.0,
-    "poleRateRA": 0.0, "poleRateDec": 0.0, "rotationRate": 0.0
+    "poleRightAscension": 317.269202, "poleDeclination": 54.432516, "primeMeridian": 176.049863,
+    "poleRateRA": -0.10927547, "poleRateDec": -0.05827105, "rotationRate": 350.891982443297
   }
 }
 ```
 
+The example above is the shipped Mars record; `epochJD`, `frame`, `angleUnit`, `timeConvention`, `validityStartJD`, `validityEndJD` and all six `coefficients` fields are required.
 Angles in degrees, pole rates in degrees per Julian century, rotation rate in degrees per day.
 A retrograde rotator has a negative `rotationRate` - Venus is about -1.4814 and Uranus about -501.1601.
 

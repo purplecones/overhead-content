@@ -53,15 +53,21 @@ One entry per pull request unless the entries only make sense together.
 
 ### Bodies (`content/bodies/`)
 
-The app currently draws only major bodies that orbit the Sun on Kepler elements in `ecliptic-j2000`, plus Earth's Moon.
-Moons of other planets and minor-tier bodies are admitted into the catalogue but not drawn yet; do not add one unless the person has accepted that it will not appear on screen.
+A major body with a `kepler-standish-table2a` orbit is drawn whatever its parent: the elements are parent-relative in `ecliptic-j2000`, so a moon of another planet draws exactly like a planet does once it is major.
+Minor-tier records, and a `legacy-lunar-schlyter` orbit for any parent but Earth, are the only bodies not drawn (the latter is rejected outright, not merely left undrawn); do not add either unless the person has accepted that.
 
 - Copy a planet record (`jupiter` is a clean example) for any new body.
-- Orbit elements from JPL (`https://ssd.jpl.nasa.gov/planets/approx_pos.html` for planets, the JPL Small-Body Database at `https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html` for asteroids and dwarf planets), rotation from NAIF `pck00011.tpc`, radii and GM from JPL or NSSDC fact sheets.
+- Orbit elements for a planet come straight from JPL's Table 2a fit (`https://ssd.jpl.nasa.gov/planets/approx_pos.html`); for anything else, generate them from JPL Horizons (`https://ssd.jpl.nasa.gov/horizons/`) instead.
+  Look up osculating elements at epoch JD 2451545.0 TDB, frame ICRF/ecliptic J2000, centred on the parent (`@10` for the Sun, or the planet for a moon, for example `@599` for Jupiter), in au and degrees.
+  Map them onto the schema: `semiMajorAxisAU` = A, `eccentricity` = EC, `inclinationDeg` = IN, `longitudeOfAscendingNodeDeg` = OM, `longitudeOfPerihelionDeg` = OM + W, `meanLongitudeDeg` = OM + W + MA normalised to 0-360, `rateMeanLongitude` = N (deg/day) x 36525; leave every other rate at 0 unless a published secular fit exists for that body.
+  Osculating elements drift outside a short window, so keep `validityStartJD`/`validityEndJD` narrow (plus or minus 50 years around J2000 is a reasonable default) and say so in `provenance.accuracy`.
+  The JPL Small-Body Database (`https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html`) is fine for finding an object, but do not paste its elements straight into a record: its epoch is rarely J2000, so its numbers need re-deriving from Horizons at JD 2451545.0 first.
+- Rotation from NAIF `pck00011.tpc`, radii and GM from JPL or NSSDC fact sheets.
   Take all radii from one source.
 - Textures: NASA, USGS Astrogeology, or Solar System Scope (CC BY 4.0) are safe.
   Equirectangular, 2:1, JPEG or PNG.
-- `tier` is `major` only when you have radii, rotation, and a texture; otherwise `minor`.
+- `tier` is `major` when you have a texture; radii and rotation are required either way now, so texture is the only thing tier still depends on.
+  Without a texture, use `minor`.
 - `provenance.accuracy` must state what the model omits and how large the error is.
 - `validate.py` does not run the app's own admission checks (exact orbit math, the major-body limit); a clean run is necessary but not sufficient, so telling the person to test a body on their phone before merging is required, not optional.
 - Reference: `docs/schema.md`.
