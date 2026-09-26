@@ -237,7 +237,7 @@ class CraftKind(Kind):
             if pattern is None:
                 problems.append(Problem(path, f"{self.domain} craft have no types yet"))
                 break
-            if not re.match(pattern, str(name)):
+            if not re.fullmatch(pattern, str(name)):
                 problems.append(Problem(path, f"type {name!r} does not match the {self.domain} pattern {pattern}"))
         if not classes and not types and not matches.get("default"):
             problems.append(Problem(path, "matches must name a class, a type, or default"))
@@ -257,8 +257,13 @@ class CraftKind(Kind):
             data = model_path.read_bytes()
             if model.get("sha256") != hashlib.sha256(data).hexdigest() or model.get("byteLimit") != len(data):
                 problems.append(Problem(path, "model.glb sha256 or byteLimit is stale; run python3 scripts/stamp.py content"))
-            for message in glb.check(data):
-                problems.append(Problem(rel(root, model_path), message))
+            try:
+                messages = glb.check(data)
+            except Exception as error:  # glb.check should report, never raise; this is a last resort.
+                problems.append(Problem(rel(root, model_path), f"could not be read as a GLB: {error}"))
+            else:
+                for message in messages:
+                    problems.append(Problem(rel(root, model_path), message))
         return problems
 
 

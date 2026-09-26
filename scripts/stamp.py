@@ -18,11 +18,12 @@ continuous integration runs. Records are rewritten with sorted keys and a
 two-space indent, which is the shape the shipped records already have, so a
 stamp of an already-correct record is a no-op in the diff.
 
-Only the four measured fields are ever touched. `format`, `path`, `id` and
+Only an asset's measured fields are ever touched: `sha256` and `byteLimit` for
+every asset, plus `width` and `height` for an image. `format`, `path`, `id` and
 `required` are the author's declaration and are read, not rewritten: a mismatch
 between the declared format and the file is reported as an error rather than
-quietly corrected, because a JPEG relabelled as PNG is an authoring mistake, not
-a stale digest.
+quietly corrected, because a JPEG relabelled as PNG, or a GLB relabelled as an
+image, is an authoring mistake, not a stale digest.
 """
 
 from __future__ import annotations

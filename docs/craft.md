@@ -45,7 +45,7 @@ Two records may not claim the same type, and a domain has at most one default; t
 - Authored units do not matter: the app scales the model uniformly so its extent along Z equals `dimensions.length`.
 - Keep it as light as it can be while reading well at a few hundred pixels.
   There is no vertex or byte limit, but a phone draws dozens of these at once, so a heavy model costs everyone frames.
-- `python3 scripts/validate.py content` runs the same structural checks as the app's loader and prints exactly what the app would reject.
+- `python3 scripts/validate.py content` mirrors the app's loader (`GlobeGLB.swift`, `GlobeAircraftAsset.swift`): a model it accepts loads on the phone, and a model it rejects fails to load there too, though the message on screen is the app's own, not this script's.
 
 ## Licence
 

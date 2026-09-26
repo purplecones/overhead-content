@@ -2,6 +2,7 @@ import hashlib
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from support import make_root, write_entry, messages
 from test_glb import tiny_glb
@@ -77,6 +78,15 @@ class CraftTests(unittest.TestCase):
         write_entry(self.root, "craft/aircraft", "bad", record, files)
         self.assertIn("content/craft/aircraft/bad/model.glb: accessor 2: index 9 is past the 3 vertices of its primitive",
                       messages(validate.validate(self.root)))
+
+    def test_glb_check_crash_is_reported_not_raised(self):
+        # glb.check is written to report a problem rather than raise, but
+        # validate.py must not depend on that: a bug in the checker should
+        # surface as a problem, not take the whole run down with it.
+        self.add("aircraft", "peregrine")
+        with patch("validate.glb.check", side_effect=RuntimeError("boom")):
+            found = messages(validate.validate(self.root))
+        self.assertIn("content/craft/aircraft/peregrine/model.glb: could not be read as a GLB: boom", found)
 
     def test_stale_digest_is_reported(self):
         self.add("aircraft", "stale", model={"id": "model", "path": "model.glb", "format": "glb",
