@@ -14,7 +14,9 @@ Usage:
     python3 scripts/stamp.py --check content
 
 `--check` stamps nothing and exits non-zero if any record is stale, which is what
-continuous integration runs. Records are rewritten with sorted keys and a
+continuous integration runs. A record this script cannot read or measure is
+reported as a `path: problem` line and the exit status is 2; the other records
+are still processed. Records are rewritten with sorted keys and a
 two-space indent, which is the shape the shipped records already have, so a
 stamp of an already-correct record is a no-op in the diff.
 
@@ -97,22 +99,45 @@ def dimensions(data: bytes, declared_format: str, label: str) -> tuple[int, int]
         raise StampError(f"{label}: {error}") from error
 
 
-def stamp_record(path: Path, check_only: bool) -> bool:
-    """Returns True when the record on disk was already correct."""
-    record = json.loads(path.read_text())
+def assets_of(record) -> list:
+    if not isinstance(record, dict):
+        raise StampError("record.json must be a JSON object")
     assets = list(record.get("assets") or [])
     for layer in record.get("layers") or []:
+        if not isinstance(layer, dict):
+            raise StampError("every layer must be a JSON object")
         assets.extend(layer.get("assets") or [])
     if isinstance(record.get("model"), dict):
         assets.append(record["model"])
+    return assets
+
+
+def stamp_record(path: Path, check_only: bool) -> bool:
+    """Returns True when the record on disk was already correct.
+
+    Raises StampError for anything it cannot stamp; the message leaves out
+    the record path, which the caller prints in front of it."""
+    if path.is_symlink():
+        raise StampError("is a symlink; entries hold regular files only")
+    try:
+        record = json.loads(path.read_text())
+    except ValueError as error:
+        raise StampError(f"not valid JSON: {error}") from error
     stale: list[str] = []
-    for asset in assets:
-        asset_path = path.parent / asset["path"]
-        label = f"{path.parent.name}/{asset['path']}"
+    for asset in assets_of(record):
+        if not isinstance(asset, dict):
+            raise StampError("every asset must be a JSON object")
+        name = asset.get("path")
+        if not isinstance(name, str) or not name or "/" in name or "\\" in name or name.startswith("."):
+            raise StampError(f"asset {asset.get('id')!r} needs a path naming a plain file in the entry directory")
+        asset_path = path.parent / name
+        label = f"{path.parent.name}/{name}"
+        if asset_path.is_symlink():
+            raise StampError(f"{label}: is a symlink; entries hold regular files only")
         if not asset_path.is_file():
             raise StampError(f"{label}: declared by record.json but missing on disk")
         data = asset_path.read_bytes()
-        declared_format = asset.get("format", "").lower()
+        declared_format = str(asset.get("format", "")).lower()
         if declared_format == "glb":
             if data[:4] != b"glTF":
                 raise StampError(f"{label}: declared glb but the file is not a GLB")
@@ -135,22 +160,46 @@ def stamp_record(path: Path, check_only: bool) -> bool:
     return False
 
 
-def records_of(root: Path) -> list[Path]:
+def shown(root: Path, path: Path) -> str:
+    """A path as validate.py prints it: relative to the repository root."""
+    try:
+        return str(path.relative_to(root.parent))
+    except ValueError:
+        return str(path)
+
+
+def records_of(root: Path, errors: list[str]) -> list[Path]:
     """Every entry the index declares, in index order.
 
     The index is the authority on what ships, so a stray directory left behind
-    by a deleted entry is neither stamped nor reported as missing.
+    by a deleted entry is neither stamped nor reported as missing. A problem
+    with the index or an entry is appended to `errors` as a `path: problem`
+    line rather than raised, so one bad entry does not hide the rest.
     """
     index_path = root / INDEX_FILENAME
     if not index_path.is_file():
-        raise StampError(f"{index_path} is missing")
-    index = json.loads(index_path.read_text())
+        errors.append(f"{shown(root, index_path)}: is missing")
+        return []
+    try:
+        index = json.loads(index_path.read_text())
+    except ValueError as error:
+        errors.append(f"{shown(root, index_path)}: not valid JSON: {error}")
+        return []
+    kinds = index.get("kinds") if isinstance(index, dict) else None
+    if not isinstance(kinds, dict):
+        errors.append(f"{shown(root, index_path)}: must be an object with a 'kinds' object")
+        return []
     paths: list[Path] = []
-    for kind, ids in sorted(index.get("kinds", {}).items()):
+    for kind, ids in sorted(kinds.items()):
+        if not isinstance(ids, list):
+            errors.append(f"{shown(root, index_path)}: {kind} must be an array of ids")
+            continue
         for entry in ids:
-            record = root / kind / entry / RECORD_FILENAME
+            record = root / kind / str(entry) / RECORD_FILENAME
             if not record.is_file():
-                raise StampError(f"index declares {kind}/{entry} but {record} is missing")
+                errors.append(f"{shown(root, index_path)}: declares {kind}/{entry} but "
+                              f"{shown(root, record)} is missing")
+                continue
             paths.append(record)
     return paths
 
@@ -162,11 +211,22 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--check", action="store_true",
                         help="report stale records without rewriting them")
     arguments = parser.parse_args(argv)
-    try:
-        records = records_of(arguments.root)
-        clean = [stamp_record(record, arguments.check) for record in records]
-    except StampError as error:
-        print(f"error: {error}", file=sys.stderr)
+    root = arguments.root.resolve()
+    errors: list[str] = []
+    records = records_of(root, errors)
+    clean: list[bool] = []
+    for record in records:
+        try:
+            clean.append(stamp_record(record, arguments.check))
+        except StampError as error:
+            errors.append(f"{shown(root, record)}: {error}")
+        except (OSError, ValueError, KeyError, TypeError, AttributeError) as error:
+            # A last resort: stamp_record should raise StampError for anything
+            # a contributor can cause, but a traceback helps nobody.
+            errors.append(f"{shown(root, record)}: could not be stamped: {error!r}")
+    if errors:
+        for line in errors:
+            print(line, file=sys.stderr)
         return 2
     if all(clean):
         print(f"{len(records)} records already carry their measured asset values")
