@@ -14,7 +14,7 @@ If you cannot name the licence, do not add the file.
 
 ```
 content/index.json                         which entries exist, per kind, in display order
-content/bodies/<id>/                       planets, moons, asteroids: record.json, texture.jpg, README.md
+content/bodies/<id>/                       planets, moons, asteroids: record.json, texture.jpg or texture.png, README.md
 content/events/solar-eclipses/<id>/        eclipses the app lists: record.json, README.md
 content/craft/<domain>/<id>/               3D models: record.json, model.glb, README.md
 content/transit-feeds/<id>/                GTFS-realtime feeds the backend ingests: record.json, README.md
@@ -36,6 +36,7 @@ The order of ids under `bodies` is the on-screen order; never sort that array.
 3. Put assets in the same directory and declare them in the record.
 4. Run, from the repository root:
 
+       python3 -m venv .venv && . .venv/bin/activate
        python3 -m pip install -r requirements-dev.txt
        python3 scripts/stamp.py content
        python3 scripts/validate.py content
@@ -43,8 +44,8 @@ The order of ids under `bodies` is the on-screen order; never sort that array.
    `stamp.py` fills in every `sha256`, `byteLimit`, `width` and `height`; never type those by hand.
    `validate.py` prints `path: problem`; fix each one and rerun until it prints nothing and exits 0.
 5. Write the entry's `README.md`: what it is, each source as a link, the licence, and the attribution the licence requires.
-6. Commit with a message such as `feat(bodies): add Europa` and open a pull request using the template.
-   Tell the person how to test it on their phone before the review: open `overhead://content?source=https://github.com/<fork>/overhead-content/tree/<branch>` on the phone, or paste that GitHub URL under Options, Content.
+6. Commit with a message such as `feat(bodies): add Ceres` and open a pull request using the template.
+   Tell the person how to test it on their phone before the review: open `overhead://content?source=https://github.com/<owner>/overhead-content/tree/<branch>` on the phone, or paste that GitHub URL under Options, Content.
 
 One entry per pull request unless the entries only make sense together.
 
@@ -52,13 +53,17 @@ One entry per pull request unless the entries only make sense together.
 
 ### Bodies (`content/bodies/`)
 
-- Copy the nearest existing record: a planet for a planet, `moon` for a moon.
-- Orbit elements from JPL (`https://ssd.jpl.nasa.gov/planets/approx_pos.html` for planets), rotation from NAIF `pck00011.tpc`, radii and GM from JPL or NSSDC fact sheets.
+The app currently draws only major bodies that orbit the Sun on Kepler elements in `ecliptic-j2000`, plus Earth's Moon.
+Moons of other planets and minor-tier bodies are admitted into the catalogue but not drawn yet; do not add one unless the person has accepted that it will not appear on screen.
+
+- Copy a planet record (`jupiter` is a clean example) for any new body.
+- Orbit elements from JPL (`https://ssd.jpl.nasa.gov/planets/approx_pos.html` for planets, the JPL Small-Body Database at `https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html` for asteroids and dwarf planets), rotation from NAIF `pck00011.tpc`, radii and GM from JPL or NSSDC fact sheets.
   Take all radii from one source.
 - Textures: NASA, USGS Astrogeology, or Solar System Scope (CC BY 4.0) are safe.
   Equirectangular, 2:1, JPEG or PNG.
 - `tier` is `major` only when you have radii, rotation, and a texture; otherwise `minor`.
 - `provenance.accuracy` must state what the model omits and how large the error is.
+- `validate.py` does not run the app's own admission checks (exact orbit math, the major-body limit); a clean run is necessary but not sufficient, so telling the person to test a body on their phone before merging is required, not optional.
 - Reference: `docs/schema.md`.
 
 ### Solar eclipses (`content/events/solar-eclipses/`)
@@ -106,12 +111,11 @@ One entry per pull request unless the entries only make sense together.
 ## Pull request description
 
 Use `.github/pull_request_template.md`.
-State what was added, list each source with what it provided, name the licence and attribution, paste the last lines of `validate.py`, and say whether it was checked on a phone.
+State what was added, list each source with what it provided, name the licence and attribution, say that `validate.py` printed nothing and exited 0, and say whether it was checked on a phone.
 
 ## Prompts a person can give you
 
-- "Add Jupiter's moon Europa as a minor body, with sources."
-- "Give Europa a texture from USGS and promote it to major."
+- "Add the dwarf planet Ceres as a major body, with its Dawn texture and sources."
 - "Add a CC0 container ship model for cargo vessels; here is the GLB and its Sketchfab page."
 - "Add the ISS model from NASA's 3D resources as satellite 25544."
 - "Add the eclipses for 2037 to 2040 and give the 2037 Australian one a title."

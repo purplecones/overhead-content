@@ -54,7 +54,7 @@ Take all axes of an ellipsoid from one source so the flattening stays self-consi
   "epochJD": 2451545.0,
   "frame": "ecliptic-j2000",
   "distanceUnit": "au",
-  "angleUnit": "degrees",
+  "angleUnit": "deg",
   "timeConvention": "tt-as-utc",
   "validityStartJD": 625673.5,
   "validityEndJD": 2816787.5,

@@ -11,7 +11,7 @@ The app fetches the latest release of this repository, so merged content reaches
 ```
 content/
   index.json                       what entries exist, per kind, in display order
-  bodies/<id>/                     planets, moons and asteroids: record.json, texture.jpg, README.md
+  bodies/<id>/                     planets, moons and asteroids: record.json, texture.jpg or texture.png, README.md
   events/solar-eclipses/<id>/      the eclipses the app lists: record.json, README.md
   craft/<domain>/<id>/             3D models for aircraft, vessels, satellites and transit: record.json, model.glb, README.md
   transit-feeds/<id>/              live transit feeds the backend ingests: record.json, README.md
@@ -47,7 +47,7 @@ An eclipse record is admitted only if the app's own calculation agrees with it; 
 You do not need to build the app.
 Fork this repository, push your branch, and point the app at it: paste your fork, branch or pull request URL under Options, Content, or open this link on the phone:
 
-    overhead://content?source=https://github.com/<you>/overhead-content/tree/<branch>
+    overhead://content?source=https://github.com/<owner>/overhead-content/tree/<branch>
 
 The catalogue reloads in the running session, and anything the app could not show is listed there with the reason.
 Tap "Return to official content" when you are done; updating the app does this too.
@@ -59,10 +59,10 @@ Then open the pull request.
 
 Clone your fork, open it in Claude Code, Codex, Cursor or any agent that reads `AGENTS.md`, and ask for what you want:
 
-    Add Jupiter's moon Europa as a minor body, with sources.
+    Add the dwarf planet Ceres as a major body, with its Dawn texture and sources.
 
 The agent finds the procedure, the field references and the two commands to run in `AGENTS.md`, and stops when `scripts/validate.py` is clean.
-Check the result on your phone, then open the pull request it prepared.
+For a body, that is not the finish line: the validator cannot see everything the app computes when it draws one, so check the result on your phone before you open the pull request it prepared.
 
 ## Contributing
 

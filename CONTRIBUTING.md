@@ -53,15 +53,14 @@ You still read the result, test it on your phone, and sign the pull request.
 `major` bodies are fully modelled: they get a frame slot, a texture and their own rendering.
 They cost more to draw, so make one only when you have the radii and a real texture.
 
-`minor` bodies are drawn as batched points.
-They cost almost nothing, so there can be very many of them.
+`minor` bodies are admitted into the catalogue but not drawn: the app has no minor-body rendering yet, only a reserved place for when it does.
+They cost almost nothing to admit, so there can be very many of them, but add one only when the person accepts that it will not appear on screen yet.
 
 Tier is a description of what the record supports, not a request.
 A record that declares `major` must supply what a major body needs - real radii and a texture - and is rejected if it does not.
 Promoting a minor body later is a pull request that adds a texture, not a schema migration.
 
-Start at `minor` if you do not have a good texture.
-A correctly placed point is worth more than a major body wearing someone else's map.
+Start at `minor` if you do not have a good texture, and say so plainly: it will sit in the catalogue undrawn until someone adds one.
 
 ## Capabilities
 
