@@ -38,7 +38,14 @@ MINIMAL_BODY = {
             "poleRightAscension": 268.056595, "primeMeridian": 284.95, "rotationRate": 870.536,
         },
     },
-    "appearance": {},
+    # Minimal but decodable: presentation, albedo, albedoScale and photometry
+    # are non-optional on CelestialCatalogueAppearance for every tier.
+    "appearance": {
+        "presentation": "ellipsoid",
+        "albedo": [0.1, 0.1, 0.1],
+        "albedoScale": 1,
+        "photometry": {"model": "lambert", "version": "1"},
+    },
     "assets": [],
     "provenance": {"sources": ["https://ssd.jpl.nasa.gov/"], "attribution": "JPL", "licence": "Public domain",
                    "modelVersion": "x", "accuracy": "x", "coverage": "x"},
@@ -70,12 +77,11 @@ class ExistingKindTests(unittest.TestCase):
         write_entry(self.root, "bodies", "ceres", MINIMAL_BODY)
         self.assertEqual(messages(validate.validate(self.root)), [])
 
-    def test_major_body_needs_texture_and_radii(self):
+    def test_major_body_needs_texture(self):
         record = dict(MINIMAL_BODY, tier="major")
         write_entry(self.root, "bodies", "ceres", record)
         found = messages(validate.validate(self.root))
-        self.assertIn("content/bodies/ceres/record.json: a major body needs equatorialRadiusM, "
-                      "polarRadiusM, rotation, and appearance.textureID", found)
+        self.assertIn("content/bodies/ceres/record.json: a major body needs appearance.textureID", found)
 
     def test_texture_id_must_name_an_asset(self):
         record = dict(MINIMAL_BODY, appearance={"presentation": "sphere", "textureID": "nope"})
@@ -113,6 +119,36 @@ class ExistingKindTests(unittest.TestCase):
         found = messages(validate.validate(self.root))
         self.assertIn("content/bodies/ceres/record.json: legacy-lunar-schlyter only works for a body "
                       "whose parent is earth", found)
+
+    def test_appearance_missing_albedo_is_rejected(self):
+        appearance = {k: v for k, v in MINIMAL_BODY["appearance"].items() if k != "albedo"}
+        record = dict(MINIMAL_BODY, appearance=appearance)
+        write_entry(self.root, "bodies", "ceres", record)
+        found = messages(validate.validate(self.root))
+        self.assertIn("content/bodies/ceres/record.json: appearance: 'albedo' is a required property", found)
+
+    def test_kepler_orbit_missing_validity_end_is_rejected(self):
+        orbit = {k: v for k, v in MINIMAL_BODY["orbit"].items() if k != "validityEndJD"}
+        record = dict(MINIMAL_BODY, orbit=orbit)
+        write_entry(self.root, "bodies", "ceres", record)
+        found = messages(validate.validate(self.root))
+        self.assertTrue(any(m.startswith("content/bodies/ceres/record.json: orbit: ")
+                            and "is not valid under any of the given schemas" in m for m in found), found)
+
+    def test_iau_rotation_missing_a_coefficient_is_rejected(self):
+        coefficients = {k: v for k, v in MINIMAL_BODY["rotation"]["coefficients"].items() if k != "rotationRate"}
+        record = dict(MINIMAL_BODY, rotation=dict(MINIMAL_BODY["rotation"], coefficients=coefficients))
+        write_entry(self.root, "bodies", "ceres", record)
+        found = messages(validate.validate(self.root))
+        self.assertTrue(any(m.startswith("content/bodies/ceres/record.json: rotation: ")
+                            and "is not valid under any of the given schemas" in m for m in found), found)
+
+    def test_unknown_orbit_model_id_is_rejected(self):
+        record = dict(MINIMAL_BODY, orbit=dict(MINIMAL_BODY["orbit"], model="made-up-model"))
+        write_entry(self.root, "bodies", "ceres", record)
+        found = messages(validate.validate(self.root))
+        self.assertTrue(any(m.startswith("content/bodies/ceres/record.json: orbit: ")
+                            and "is not valid under any of the given schemas" in m for m in found), found)
 
     def test_transit_feed_coverage_order(self):
         record = dict(MINIMAL_FEED, coverage={"minLat": 41.0, "minLon": -74.5, "maxLat": 40.0, "maxLon": -73.5})

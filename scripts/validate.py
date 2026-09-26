@@ -157,9 +157,10 @@ class BodiesKind(Kind):
     record_kind = "body"
     schema = "body.schema.json"
 
-    # The app's admission checks reject an orbit that does not use exactly
-    # these conventions (CelestialCatalogue.validateOrbit); a schema cannot
-    # express "this field equals this value", so it is checked here.
+    # The app's admission checks reject an orbit or rotation that does not use
+    # exactly these conventions (CelestialCatalogue.validateOrbit,
+    # ~413-450, and validateRotation, ~467-517); a schema cannot express
+    # "this field equals this value", so it is checked here.
     KEPLER_ORBIT_CONVENTIONS = {
         "epochJD": 2451545.0,
         "frame": "ecliptic-j2000",
@@ -170,6 +171,17 @@ class BodiesKind(Kind):
     LEGACY_LUNAR_ORBIT_CONVENTIONS = {
         "epochJD": 2451545.0,
         "frame": "earth-fixed",
+        "timeConvention": "tt-as-utc",
+    }
+    IAU_LINEAR_ROTATION_CONVENTIONS = {
+        "epochJD": 2451545.0,
+        "frame": "equatorial-j2000",
+        "angleUnit": "deg",
+        "timeConvention": "tt-as-utc",
+    }
+    LEGACY_LUNAR_ROTATION_CONVENTIONS = {
+        "epochJD": 2451545.0,
+        "frame": "world-legacy",
         "timeConvention": "tt-as-utc",
     }
 
@@ -185,11 +197,11 @@ class BodiesKind(Kind):
         texture = (record.get("appearance") or {}).get("textureID")
         if texture is not None and texture not in asset_ids:
             problems.append(Problem(path, f"appearance.textureID {texture!r} names no asset"))
-        if record.get("tier") == "major" and not all([
-            record.get("equatorialRadiusM"), record.get("polarRadiusM"), record.get("rotation"), texture,
-        ]):
-            problems.append(Problem(path, "a major body needs equatorialRadiusM, polarRadiusM, rotation, "
-                                          "and appearance.textureID"))
+        # equatorialRadiusM, polarRadiusM and rotation are schema-required for
+        # every tier now (the app decodes them for both); a texture is the
+        # one thing that still distinguishes major from minor.
+        if record.get("tier") == "major" and not texture:
+            problems.append(Problem(path, "a major body needs appearance.textureID"))
         orbit = record.get("orbit") or {}
         model = orbit.get("model")
         if model == "kepler-standish-table2a":
@@ -203,6 +215,16 @@ class BodiesKind(Kind):
             if record.get("parent") != "earth":
                 problems.append(Problem(path, "legacy-lunar-schlyter only works for a body whose parent "
                                               "is earth"))
+        rotation = record.get("rotation") or {}
+        rotation_model = rotation.get("model")
+        if rotation_model == "iau-linear":
+            for field, expected in self.IAU_LINEAR_ROTATION_CONVENTIONS.items():
+                if rotation.get(field) != expected:
+                    problems.append(Problem(path, f"rotation.{field} must be {_convention_repr(expected)}"))
+        elif rotation_model == "legacy-lunar-libration":
+            for field, expected in self.LEGACY_LUNAR_ROTATION_CONVENTIONS.items():
+                if rotation.get(field) != expected:
+                    problems.append(Problem(path, f"rotation.{field} must be {_convention_repr(expected)}"))
         return problems
 
 
