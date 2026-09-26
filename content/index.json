@@ -11,6 +11,9 @@
       "uranus",
       "neptune"
     ],
+    "craft/aircraft": [
+      "peregrine"
+    ],
     "transit-feeds": [
       "mbta",
       "mta-bus",

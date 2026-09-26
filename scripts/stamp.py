@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
-"""Stamp asset digests, byte sizes and pixel dimensions into celestial records.
+"""Stamp asset digests, byte sizes and pixel dimensions into records of every kind.
 
 Every `content/<kind>/<id>/record.json` declares its assets with a `sha256`, a
-`byteLimit` and a `width`/`height` pair, and admission rejects the record if any
-of them disagrees with the file on disk. Computing those by hand is the step a
-contributor gets wrong, so this walks the content tree, reads each declared
-asset from the directory beside its record, and writes the measured values back.
+`byteLimit` and, for images, a `width`/`height` pair, and admission rejects the
+record if any of them disagrees with the file on disk. Computing those by hand
+is the step a contributor gets wrong, so this walks the content tree, reads
+each declared asset from the directory beside its record, and writes the
+measured values back.
 
 Usage:
 
-    python3 scripts/celestial/stamp-content.py ios/Overhead/Resources/content
-    python3 scripts/celestial/stamp-content.py --check ios/Overhead/Resources/content
+    python3 scripts/stamp.py content
+    python3 scripts/stamp.py --check content
 
 `--check` stamps nothing and exits non-zero if any record is stale, which is what
 continuous integration runs. Records are rewritten with sorted keys and a
@@ -35,7 +36,8 @@ from pathlib import Path
 
 RECORD_FILENAME = "record.json"
 INDEX_FILENAME = "index.json"
-MEASURED_FIELDS = ("sha256", "byteLimit", "width", "height")
+IMAGE_FIELDS = ("sha256", "byteLimit", "width", "height")
+BINARY_FIELDS = ("sha256", "byteLimit")
 
 
 class StampError(Exception):
@@ -100,6 +102,8 @@ def stamp_record(path: Path, check_only: bool) -> bool:
     assets = list(record.get("assets") or [])
     for layer in record.get("layers") or []:
         assets.extend(layer.get("assets") or [])
+    if isinstance(record.get("model"), dict):
+        assets.append(record["model"])
     stale: list[str] = []
     for asset in assets:
         asset_path = path.parent / asset["path"]
@@ -107,14 +111,17 @@ def stamp_record(path: Path, check_only: bool) -> bool:
         if not asset_path.is_file():
             raise StampError(f"{label}: declared by record.json but missing on disk")
         data = asset_path.read_bytes()
-        width, height = dimensions(data, asset.get("format", ""), label)
-        measured = {
-            "sha256": sha256_of(data),
-            "byteLimit": len(data),
-            "width": width,
-            "height": height,
-        }
-        for field in MEASURED_FIELDS:
+        declared_format = asset.get("format", "").lower()
+        if declared_format == "glb":
+            if data[:4] != b"glTF":
+                raise StampError(f"{label}: declared glb but the file is not a GLB")
+            fields = BINARY_FIELDS
+            measured = {"sha256": sha256_of(data), "byteLimit": len(data)}
+        else:
+            width, height = dimensions(data, declared_format, label)
+            fields = IMAGE_FIELDS
+            measured = {"sha256": sha256_of(data), "byteLimit": len(data), "width": width, "height": height}
+        for field in fields:
             if asset.get(field) != measured[field]:
                 stale.append(f"{label}: {field} {asset.get(field)!r} -> {measured[field]!r}")
                 asset[field] = measured[field]

@@ -16,8 +16,10 @@ agent runs, so all three see the same verdict.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import math
+import re
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -28,6 +30,8 @@ try:
 except ImportError:  # pragma: no cover
     print("validate.py needs jsonschema: python3 -m pip install -r requirements-dev.txt", file=sys.stderr)
     raise SystemExit(2)
+
+import glb
 
 RECORD = "record.json"
 README = "README.md"
@@ -193,8 +197,75 @@ class TransitFeedsKind(Kind):
         return problems
 
 
+CRAFT_CLASSES = {
+    "aircraft": ["airplane", "propeller", "helicopter", "glider", "balloon", "parachutist", "ultralight",
+                 "drone", "space-vehicle", "ground-vehicle", "obstacle"],
+    "vessels": ["fishing", "tug", "sailing", "pleasure", "high-speed", "service", "passenger", "cargo",
+                "tanker", "other"],
+    "satellites": ["payload", "rocket-body", "debris"],
+    "transit": ["bus", "subway", "light-rail", "rail", "ferry", "cable"],
+}
+CRAFT_TYPE_PATTERNS = {
+    "aircraft": r"^[A-Z0-9]{2,4}$",
+    "vessels": r"^[0-9]{9}$",
+    "satellites": r"^[0-9]{1,9}$",
+}
+
+
+class CraftKind(Kind):
+    record_kind = "craft"
+    schema = "craft.schema.json"
+
+    def __init__(self, domain: str):
+        self.domain = domain
+        self.key = f"craft/{domain}"
+
+    def assets_of(self, record: dict) -> list[dict]:
+        model = record.get("model")
+        return [model] if isinstance(model, dict) else []
+
+    def check(self, entry: Entry, records: list[Entry], root: Path) -> list[Problem]:
+        record, path, problems = entry.record, rel(root, entry.record_path), []
+        matches = record.get("matches") or {}
+        classes, types = matches.get("classes") or [], matches.get("types") or []
+        allowed = CRAFT_CLASSES[self.domain]
+        for name in classes:
+            if name not in allowed:
+                problems.append(Problem(path, f"class {name!r} is not a {self.domain} class ({', '.join(allowed)})"))
+        pattern = CRAFT_TYPE_PATTERNS.get(self.domain)
+        for name in types:
+            if pattern is None:
+                problems.append(Problem(path, f"{self.domain} craft have no types yet"))
+                break
+            if not re.match(pattern, str(name)):
+                problems.append(Problem(path, f"type {name!r} does not match the {self.domain} pattern {pattern}"))
+        if not classes and not types and not matches.get("default"):
+            problems.append(Problem(path, "matches must name a class, a type, or default"))
+        # Earlier records in index order keep their claims.
+        for other in records:
+            if other is entry:
+                break
+            other_matches = other.record.get("matches") or {}
+            for name in types:
+                if name in (other_matches.get("types") or []):
+                    problems.append(Problem(path, f"type {name!r} is already claimed by {other.id}"))
+            if matches.get("default") and other_matches.get("default"):
+                problems.append(Problem(path, f"{self.domain} already has a default, {other.id}"))
+        model = record.get("model")
+        model_path = entry.directory / "model.glb"
+        if isinstance(model, dict) and model_path.is_file():
+            data = model_path.read_bytes()
+            if model.get("sha256") != hashlib.sha256(data).hexdigest() or model.get("byteLimit") != len(data):
+                problems.append(Problem(path, "model.glb sha256 or byteLimit is stale; run python3 scripts/stamp.py content"))
+            for message in glb.check(data):
+                problems.append(Problem(rel(root, model_path), message))
+        return problems
+
+
 register(BodiesKind())
 register(TransitFeedsKind())
+for _domain in CRAFT_CLASSES:
+    register(CraftKind(_domain))
 
 
 def rel(root: Path, path: Path) -> str:

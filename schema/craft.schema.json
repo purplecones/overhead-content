@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/purplecones/overhead-content/main/schema/craft.schema.json",
+  "title": "Craft record",
+  "description": "content/craft/<domain>/<id>/record.json: a 3D model for aircraft, vessels, satellites or transit vehicles, matched by class and optionally by specific type. docs/craft.md is the field reference; scripts/validate.py checks the per-domain class ids, type patterns, and the GLB itself.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "id", "name", "licence", "model", "dimensions", "matches", "provenance"],
+  "properties": {
+    "kind": { "const": "craft" },
+    "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "name": { "type": "string", "pattern": "\\S", "maxLength": 80 },
+    "licence": { "enum": ["CC0-1.0", "CC-BY-4.0", "CC-BY-SA-4.0", "MIT", "public-domain"] },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "path", "format", "byteLimit", "sha256", "required"],
+      "properties": {
+        "id": { "const": "model" },
+        "path": { "const": "model.glb" },
+        "format": { "const": "glb" },
+        "byteLimit": { "type": "integer", "minimum": 1 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "required": { "const": true }
+      }
+    },
+    "dimensions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["length", "span"],
+      "properties": {
+        "length": { "type": "number", "exclusiveMinimum": 0, "maximum": 1000 },
+        "span": { "type": "number", "exclusiveMinimum": 0, "maximum": 1000 }
+      }
+    },
+    "matches": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["classes", "types", "default"],
+      "properties": {
+        "classes": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+        "types": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+        "default": { "type": "boolean" }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sources", "attribution"],
+      "properties": {
+        "sources": { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^https?://" } },
+        "attribution": { "type": "string", "pattern": "\\S" }
+      }
+    }
+  }
+}
