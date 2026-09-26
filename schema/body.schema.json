@@ -1,0 +1,236 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/purplecones/overhead-content/main/schema/body.schema.json",
+  "title": "Body record",
+  "description": "content/bodies/<id>/record.json. Mirrors the required keys and per-model shapes of CelestialCatalogueRecord in the app's CelestialCatalogueRecords.swift, so a record that passes here decodes there. Bounds below mirror the app's admission (CelestialCatalogue.swift); the rules a schema cannot express (radii against presentation, validity windows, orbit and rotation evaluation, cross-record ids and parents, shipped-build limits) are in scripts/validate.py. docs/schema.md is the field reference.",
+  "type": "object",
+  "required": ["kind", "id", "tier", "displayName", "parent", "capabilities", "equatorialRadiusM",
+               "polarRadiusM", "gravitationalParameterM3S2", "orbit", "rotation", "appearance", "assets",
+               "provenance"],
+  "properties": {
+    "kind": { "const": "body" },
+    "id": { "$ref": "#/$defs/id" },
+    "tier": { "enum": ["major", "minor"] },
+    "displayName": { "$ref": "#/$defs/text" },
+    "parent": { "$ref": "#/$defs/id" },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requires"],
+      "properties": {
+        "requires": { "type": "array", "items": { "$ref": "#/$defs/capability" }, "uniqueItems": true },
+        "enhances": { "type": "array", "items": { "$ref": "#/$defs/capability" }, "uniqueItems": true }
+      }
+    },
+    "equatorialRadiusM": { "type": "number", "exclusiveMinimum": 0, "maximum": 10000000000, "description": "CelestialCatalogue.validatePhysical: positive, at most CatalogueLimits.maxRadiusM (1e10 m)." },
+    "polarRadiusM": { "type": "number", "exclusiveMinimum": 0, "maximum": 10000000000, "description": "CelestialCatalogue.validatePhysical: positive, at most equatorialRadiusM (checked in validate.py)." },
+    "gravitationalParameterM3S2": { "type": "number", "exclusiveMinimum": 0, "maximum": 1e25, "description": "CelestialCatalogue.validatePhysical: positive, at most CatalogueLimits.maxGravitationalParameter (1e25)." },
+    "orbit": { "$ref": "#/$defs/orbit" },
+    "rotation": { "$ref": "#/$defs/rotation" },
+    "appearance": {
+      "type": "object",
+      "description": "Mirrors CelestialCatalogueAppearance (CelestialCatalogueRecords.swift ~144-151): presentation, albedo, albedoScale and photometry are non-optional; absoluteMagnitude and textureID are Double?/String? in the decoder, but CelestialCatalogue.validateAppearance requires absoluteMagnitude for lunar and lambert photometry (checked in validate.py), and a major body needs textureID.",
+      "required": ["presentation", "albedo", "albedoScale", "photometry"],
+      "properties": {
+        "presentation": { "enum": ["sphere", "ellipsoid"] },
+        "albedo": { "type": "array", "minItems": 3, "maxItems": 3, "items": { "type": "number", "minimum": 0, "maximum": 1 } },
+        "albedoScale": { "type": "number", "exclusiveMinimum": 0, "maximum": 100, "description": "CelestialCatalogue.validateAppearance: finite positive within CatalogueLimits.maxAlbedoScale (100)." },
+        "absoluteMagnitude": { "type": "number" },
+        "textureID": { "type": "string", "minLength": 1 },
+        "photometry": { "$ref": "#/$defs/photometry" }
+      }
+    },
+    "assets": { "type": "array", "items": { "$ref": "#/$defs/recordAsset" } },
+    "layers": {
+      "type": "array",
+      "description": "Mirrors CelestialCatalogueLayer (~126-133): params values that are neither bool, number, an array of numbers, nor a string fail CelestialLayerValue's decode (~73-86) and drop the whole package; layer assets are CelestialCatalogueLayerAsset (~102-122), which requires role, unlike a top-level asset.",
+      "items": {
+        "type": "object",
+        "required": ["type", "version"],
+        "properties": {
+          "type": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+          "version": { "type": "string", "pattern": "^[0-9]+$" },
+          "params": {
+            "type": "object",
+            "additionalProperties": {
+              "anyOf": [
+                { "type": "boolean" },
+                { "type": "number" },
+                { "type": "array", "items": { "type": "number" } },
+                { "type": "string" }
+              ]
+            }
+          },
+          "assets": { "type": "array", "items": { "$ref": "#/$defs/layerAsset" } }
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["sources", "attribution", "licence", "modelVersion", "accuracy", "coverage"],
+      "properties": {
+        "sources": { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^https?://[^/?#\\s]+\\S*$", "description": "CelestialCatalogue.validateProvenance: an http(s) URL with a host." } },
+        "attribution": { "$ref": "#/$defs/text" },
+        "licence": { "$ref": "#/$defs/text" },
+        "modelVersion": { "$ref": "#/$defs/text" },
+        "accuracy": { "$ref": "#/$defs/text" },
+        "coverage": { "$ref": "#/$defs/text" }
+      }
+    }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "text": { "type": "string", "pattern": "\\S" },
+    "capability": { "type": "string", "pattern": "^[a-z0-9-]+/[0-9]+$" },
+    "orbit": {
+      "description": "Mirrors CelestialOrbitDescriptor (CelestialCatalogueRecords.swift ~174-242): model/version pick exactly one of these two closed shapes; any other pair fails the whole package decode (~219-231, 'Unsupported orbit model').",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["model", "version", "epochJD", "frame", "timeConvention", "validityStartJD", "validityEndJD"],
+          "properties": {
+            "model": { "const": "legacy-lunar-schlyter" },
+            "version": { "const": "1" },
+            "epochJD": { "type": "number" },
+            "frame": { "type": "string" },
+            "timeConvention": { "type": "string" },
+            "validityStartJD": { "type": "number" },
+            "validityEndJD": { "type": "number" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["model", "version", "epochJD", "frame", "distanceUnit", "angleUnit", "timeConvention",
+                       "validityStartJD", "validityEndJD", "elements"],
+          "properties": {
+            "model": { "const": "kepler-standish-table2a" },
+            "version": { "const": "1" },
+            "epochJD": { "type": "number" },
+            "frame": { "type": "string" },
+            "distanceUnit": { "type": "string" },
+            "angleUnit": { "type": "string" },
+            "timeConvention": { "type": "string" },
+            "validityStartJD": { "type": "number" },
+            "validityEndJD": { "type": "number" },
+            "elements": { "$ref": "#/$defs/keplerElements" }
+          }
+        }
+      ]
+    },
+    "keplerElements": {
+      "description": "Mirrors KeplerElementSet (GenericKeplerOrbit.swift ~8-20): all twelve fields are non-optional Doubles.",
+      "type": "object",
+      "required": ["semiMajorAxisAU", "eccentricity", "inclinationDeg", "meanLongitudeDeg",
+                   "longitudeOfPerihelionDeg", "longitudeOfAscendingNodeDeg", "rateSemiMajorAxis",
+                   "rateEccentricity", "rateInclination", "rateMeanLongitude", "ratePerihelion", "rateNode"],
+      "properties": {
+        "semiMajorAxisAU": { "type": "number" },
+        "eccentricity": { "type": "number" },
+        "inclinationDeg": { "type": "number" },
+        "meanLongitudeDeg": { "type": "number" },
+        "longitudeOfPerihelionDeg": { "type": "number" },
+        "longitudeOfAscendingNodeDeg": { "type": "number" },
+        "rateSemiMajorAxis": { "type": "number" },
+        "rateEccentricity": { "type": "number" },
+        "rateInclination": { "type": "number" },
+        "rateMeanLongitude": { "type": "number" },
+        "ratePerihelion": { "type": "number" },
+        "rateNode": { "type": "number" }
+      }
+    },
+    "rotation": {
+      "description": "Mirrors CelestialRotationDescriptor (CelestialCatalogueRecords.swift ~248-316): model/version pick exactly one of these two closed shapes; any other pair fails the whole package decode (~292-304, 'Unsupported rotation model').",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["model", "version", "epochJD", "frame", "timeConvention", "validityStartJD", "validityEndJD"],
+          "properties": {
+            "model": { "const": "legacy-lunar-libration" },
+            "version": { "const": "1" },
+            "epochJD": { "type": "number" },
+            "frame": { "type": "string" },
+            "timeConvention": { "type": "string" },
+            "validityStartJD": { "type": "number" },
+            "validityEndJD": { "type": "number" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["model", "version", "epochJD", "frame", "angleUnit", "timeConvention",
+                       "validityStartJD", "validityEndJD", "coefficients"],
+          "properties": {
+            "model": { "const": "iau-linear" },
+            "version": { "const": "1" },
+            "epochJD": { "type": "number" },
+            "frame": { "type": "string" },
+            "angleUnit": { "type": "string" },
+            "timeConvention": { "type": "string" },
+            "validityStartJD": { "type": "number" },
+            "validityEndJD": { "type": "number" },
+            "coefficients": { "$ref": "#/$defs/iauCoefficients" }
+          }
+        }
+      ]
+    },
+    "iauCoefficients": {
+      "description": "Mirrors IAURotationCoefficients (BodyOrientation.swift ~69-76): all six fields are non-optional Doubles.",
+      "type": "object",
+      "required": ["poleRightAscension", "poleDeclination", "primeMeridian", "poleRateRA", "poleRateDec", "rotationRate"],
+      "properties": {
+        "poleRightAscension": { "type": "number" },
+        "poleDeclination": { "type": "number" },
+        "primeMeridian": { "type": "number" },
+        "poleRateRA": { "type": "number" },
+        "poleRateDec": { "type": "number" },
+        "rotationRate": { "type": "number" }
+      }
+    },
+    "photometry": {
+      "description": "Mirrors CelestialPhotometryDescriptor (CelestialCatalogueRecords.swift ~322-391): the three model ids share the same model+version shape, so no oneOf is needed, but an id outside this list fails the whole package decode (~363-378, 'Unsupported photometry model').",
+      "type": "object",
+      "required": ["model", "version"],
+      "properties": {
+        "model": { "enum": ["lunar", "lambert", "emissive"] },
+        "version": { "const": "1" }
+      }
+    },
+    "assetFields": {
+      "description": "Mirrors CelestialCatalogueAsset (CelestialCatalogueRecords.swift ~60-69).",
+      "type": "object",
+      "required": ["id", "path", "format", "width", "height", "byteLimit", "sha256", "required"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+        "path": { "type": "string", "pattern": "^[A-Za-z0-9_-][A-Za-z0-9_.-]*$" },
+        "format": { "type": "string" },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "byteLimit": { "type": "integer", "minimum": 1 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "required": { "type": "boolean" },
+        "role": { "type": "string" }
+      }
+    },
+    "recordAsset": {
+      "description": "A texture in the record's own assets. CelestialCatalogue.validateAssetDescriptor runs on every one and a failure fails the whole package on shipped builds: a JPEG, format jpeg, path ending .jpg or .jpeg, width and height powers of two within 2048x1024 (CatalogueLimits.maxMapWidth, maxMapHeight), byteLimit within 16 MiB (CatalogueLimits.maxEncodedBytes).",
+      "allOf": [
+        { "$ref": "#/$defs/assetFields" },
+        {
+          "properties": {
+            "format": { "const": "jpeg" },
+            "path": { "pattern": "\\.([Jj][Pp][Gg]|[Jj][Pp][Ee][Gg])$" },
+            "width": { "enum": [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048] },
+            "height": { "enum": [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024] },
+            "byteLimit": { "maximum": 16777216 }
+          }
+        }
+      ]
+    },
+    "layerAsset": {
+      "description": "Mirrors CelestialCatalogueLayerAsset (CelestialCatalogueRecords.swift ~102-122): unlike a record asset, role is non-optional, and format and dimensions come from the layer type's role (CelestialCatalogue.admitLayerAssets), where a failure drops the layer or skips the record rather than failing the package. Its 16 MiB byteLimit cap is a package-wide shipped-build limit checked in validate.py.",
+      "allOf": [
+        { "$ref": "#/$defs/assetFields" },
+        { "required": ["role"], "properties": { "format": { "enum": ["jpeg", "png"] } } }
+      ]
+    }
+  }
+}

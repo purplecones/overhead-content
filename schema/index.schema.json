@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/purplecones/overhead-content/main/schema/index.schema.json",
+  "title": "Content index",
+  "description": "content/index.json. Kinds are keyed by their folder path; each value is the ordered list of entry ids under content/<kind>/. The app decodes this as {string: [string]}, so a nested object here breaks every shipped build.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "kinds"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "kinds": {
+      "type": "object",
+      "propertyNames": { "pattern": "^[a-z0-9-]+(?:/[a-z0-9-]+)*$" },
+      "additionalProperties": {
+        "type": "array",
+        "uniqueItems": true,
+        "items": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" }
+      }
+    }
+  }
+}

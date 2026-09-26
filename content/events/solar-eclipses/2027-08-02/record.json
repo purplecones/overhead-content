@@ -1,0 +1,13 @@
+{
+  "greatest": "2027-08-02T10:06:34Z",
+  "id": "2027-08-02",
+  "kind": "solar-eclipse",
+  "provenance": {
+    "attribution": "Eclipse predictions by Fred Espenak, NASA/GSFC",
+    "source": "NASA Five Millennium Canon of Solar Eclipses, table SE2001-2100",
+    "url": "https://eclipse.gsfc.nasa.gov/SEcat5/SE2001-2100.html"
+  },
+  "summary": "Six minutes and twenty-three seconds of totality over Luxor, on a track from Spain to the Horn of Africa.",
+  "title": "Longest eclipse of the century",
+  "type": "total"
+}

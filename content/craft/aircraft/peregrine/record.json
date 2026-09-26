@@ -1,0 +1,31 @@
+{
+  "dimensions": {
+    "length": 23.05,
+    "span": 25.3
+  },
+  "id": "peregrine",
+  "kind": "craft",
+  "licence": "CC0-1.0",
+  "matches": {
+    "classes": [
+      "airplane"
+    ],
+    "default": true,
+    "types": []
+  },
+  "model": {
+    "byteLimit": 608860,
+    "format": "glb",
+    "id": "model",
+    "path": "model.glb",
+    "required": true,
+    "sha256": "e0c8a429fad4be74c326f85b7a9f5825a5d79cb65dcad125ea14b58b615ce8f4"
+  },
+  "name": "OH-01 Peregrine",
+  "provenance": {
+    "attribution": "OH-01 Peregrine, original work by the Overhead project",
+    "sources": [
+      "https://github.com/purplecones/overhead-content/tree/main/content/craft/aircraft/peregrine"
+    ]
+  }
+}

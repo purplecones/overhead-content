@@ -1,0 +1,28 @@
+name: Validate content
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python3 -m pip install -r requirements-dev.txt
+      - name: Validator tests
+        run: python3 -m unittest discover -s scripts/tests -t scripts/tests
+      - name: Stamped digests are current
+        run: python3 scripts/stamp.py --check content
+      # Runs even when the stamp check fails, so a contributor sees every
+      # problem in one CI run rather than one step's worth at a time.
+      - name: Content is valid
+        if: ${{ !cancelled() }}
+        run: python3 scripts/validate.py content

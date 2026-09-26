@@ -11,6 +11,12 @@ If you cannot say who made a texture and under what licence, do not commit the t
 Public-domain government data (NASA, JPL, USGS, NAIF) and clearly licensed open sources are safe.
 An image found through a search engine is not, no matter where it ends up being hosted.
 
+## Working with a coding agent
+
+`AGENTS.md` is written for your agent.
+Point it at the repository and describe the entry; it follows the same steps below and runs the same checks.
+You still read the result, test it on your phone, and sign the pull request.
+
 ## Adding a body
 
 1. **Fork this repository** and create a branch.
@@ -18,17 +24,20 @@ An image found through a search engine is not, no matter where it ends up being 
 2. **Create the entry directory**: `content/bodies/<id>/`, and add `<id>` to `content/index.json` under `bodies`, at the position you want it shown.
    The id is lowercase, hyphen-separated, and stable forever - it is how the app identifies the body across releases.
 
-3. **Write `record.json`.** Copy an existing record of the same tier as your starting point rather than writing one from scratch.
+3. **Write `record.json`.** Copy a planet record (`jupiter`, for example) as your starting point rather than writing one from scratch; no shipped record is `minor` tier yet, so a planet is the nearest real example either way.
    [docs/schema.md](docs/schema.md) is the field reference.
 
 4. **Add your assets** into the same directory and declare them in the record's `assets` array.
+   A body texture is a JPEG, `texture.jpg`, 2048 x 1024 pixels or another power-of-two size no larger than that, at most 16 MiB.
    Write the entry's `README.md`: sources, attribution and licence.
    Assets must be public domain, CC0, CC BY or CC BY-SA.
 
-5. **Stamp the asset metadata.** Do not fill in `sha256`, `byteLimit`, `width` or `height` by hand - they must match the bytes exactly or the app rejects the asset.
-   Run `python3 scripts/stamp.py content`, then `python3 scripts/stamp.py --check content` to confirm.
+5. **Stamp and validate.** Do not fill in `sha256`, `byteLimit`, `width` or `height` by hand.
+   Run `python3 scripts/stamp.py content`, then `python3 scripts/validate.py content`, and fix everything it prints.
+   Continuous integration runs the same two commands on your pull request.
 
 6. **Test it in the app** by pointing Overhead at your fork or branch. See the README.
+   Current app builds fail every body at once when one body record breaks a rule, so do not open a pull request for a body until `validate.py` is clean.
 
 7. **Open the pull request.** Describe where each number and each asset came from.
 
@@ -44,17 +53,19 @@ An image found through a search engine is not, no matter where it ends up being 
 ## Tiers
 
 `major` bodies are fully modelled: they get a frame slot, a texture and their own rendering.
-They are expensive, and the number of them is capped.
+They cost more to draw, so make one only when you have the radii and a real texture.
 
-`minor` bodies are drawn as batched points.
-They cost almost nothing, so there can be very many of them.
+`minor` bodies are admitted into the catalogue but not drawn: the app has no minor-body rendering yet, only a reserved place for when it does.
+Add one only when the person accepts that it will not appear on screen yet.
+
+Current app builds accept at most 14 major bodies and 64 body records in all, and `validate.py` enforces those limits.
+They will lift in a later app release.
 
 Tier is a description of what the record supports, not a request.
 A record that declares `major` must supply what a major body needs - real radii and a texture - and is rejected if it does not.
 Promoting a minor body later is a pull request that adds a texture, not a schema migration.
 
-Start at `minor` if you do not have a good texture.
-A correctly placed point is worth more than a major body wearing someone else's map.
+Start at `minor` if you do not have a good texture, and say so plainly: it will sit in the catalogue undrawn until someone adds one.
 
 ## Capabilities
 
@@ -66,6 +77,21 @@ Use it for anything optional, so your record still draws on older builds.
 
 Do not invent capability names.
 The app implements a fixed set, and a record requiring an unimplemented one is skipped everywhere until the app gains it.
+
+## Adding a solar eclipse
+
+Run `python3 scripts/eclipses/from-nasa-canon.py content --from <year> --to <year>` rather than writing a record.
+To name an eclipse, add its date to `TITLES` in that script and rerun it.
+[docs/events.md](docs/events.md) is the field reference.
+
+## Adding a craft model
+
+1. Export a `.glb` with Y up and the nose or bow along -Z, positions and normals only, colours in the material.
+   From Blender, point the nose along Blender's +Y and export with `+Y Up`.
+2. Create `content/craft/<domain>/<id>/` with `model.glb`, a `record.json` copied from `craft/aircraft/peregrine`, and a `README.md` naming the author, the source URL and the licence.
+3. Set `dimensions` to the real vehicle's length and span in metres, and `matches` to the classes or types it stands for.
+4. Add `<id>` to `content/index.json` under `craft/<domain>`, then stamp and validate.
+[docs/craft.md](docs/craft.md) is the field reference, including the class ids for each domain and the licences accepted.
 
 ## Adding a transit feed
 
@@ -82,9 +108,8 @@ Transit feed records track an agency's live vehicle positions and follow their o
    The secret name must start with `TRANSIT_KEY_`, followed only by `A-Z`, `0-9`, and underscore.
    The maintainer adds the actual value as a Worker secret of that exact name once the record is merged; until then the feed is admitted but dormant, reported as `awaiting-secret`.
 
-4. **Test it.** Run `npm run transit:try -- path/to/record.json` in the Overhead repository.
-   It validates the record, fetches its live feeds once, and prints what the ingest would commit.
-   Paste its output into the pull request.
+4. **Test it.** Fetch each feed URL in the record once and paste each URL's HTTP status code and size into the pull request, for example from `curl -sS -o /dev/null -w '%{http_code} %{size_download}\n' <url>`.
+   The maintainer runs the ingest's own check, `npm run transit:try`, during review; it lives in the app's private repository.
 
 5. **Cite the licence and credit exactly as the agency states them.** A feed nobody can credit is not admitted.
 

@@ -1,0 +1,13 @@
+{
+  "greatest": "2017-08-21T18:25:30Z",
+  "id": "2017-08-21",
+  "kind": "solar-eclipse",
+  "provenance": {
+    "attribution": "Eclipse predictions by Fred Espenak, NASA/GSFC",
+    "source": "NASA Five Millennium Canon of Solar Eclipses, table SE2001-2100",
+    "url": "https://eclipse.gsfc.nasa.gov/SEcat5/SE2001-2100.html"
+  },
+  "summary": "The first total eclipse to cross the contiguous United States coast to coast since 1918.",
+  "title": "Great American Eclipse",
+  "type": "total"
+}

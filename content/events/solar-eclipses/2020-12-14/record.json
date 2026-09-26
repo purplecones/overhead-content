@@ -1,0 +1,13 @@
+{
+  "greatest": "2020-12-14T16:13:27Z",
+  "id": "2020-12-14",
+  "kind": "solar-eclipse",
+  "provenance": {
+    "attribution": "Eclipse predictions by Fred Espenak, NASA/GSFC",
+    "source": "NASA Five Millennium Canon of Solar Eclipses, table SE2001-2100",
+    "url": "https://eclipse.gsfc.nasa.gov/SEcat5/SE2001-2100.html"
+  },
+  "summary": "The shadow crossed northern Patagonia in Chile and Argentina.",
+  "title": "Patagonian total eclipse",
+  "type": "total"
+}

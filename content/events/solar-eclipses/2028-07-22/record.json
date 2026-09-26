@@ -1,0 +1,13 @@
+{
+  "greatest": "2028-07-22T02:55:23Z",
+  "id": "2028-07-22",
+  "kind": "solar-eclipse",
+  "provenance": {
+    "attribution": "Eclipse predictions by Fred Espenak, NASA/GSFC",
+    "source": "NASA Five Millennium Canon of Solar Eclipses, table SE2001-2100",
+    "url": "https://eclipse.gsfc.nasa.gov/SEcat5/SE2001-2100.html"
+  },
+  "summary": "The shadow crosses Australia from the Kimberley to Sydney, then New Zealand's South Island.",
+  "title": "Sydney's total eclipse",
+  "type": "total"
+}

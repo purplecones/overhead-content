@@ -1,0 +1,13 @@
+{
+  "greatest": "2019-07-02T19:22:56Z",
+  "id": "2019-07-02",
+  "kind": "solar-eclipse",
+  "provenance": {
+    "attribution": "Eclipse predictions by Fred Espenak, NASA/GSFC",
+    "source": "NASA Five Millennium Canon of Solar Eclipses, table SE2001-2100",
+    "url": "https://eclipse.gsfc.nasa.gov/SEcat5/SE2001-2100.html"
+  },
+  "summary": "Totality came ashore at La Serena late in the afternoon and ended at sunset near Buenos Aires.",
+  "title": "Chile and Argentina total eclipse",
+  "type": "total"
+}
