@@ -37,6 +37,10 @@ import glb
 RECORD = "record.json"
 README = "README.md"
 INDEX = "index.json"
+# CelestialContentLayout.maximumRecordBytes: the app reads at most this many
+# bytes of a record.json for a kind it fetches directly (bodies and
+# events/solar-eclipses). This is a standing app rule, not a policy cap.
+MAX_RECORD_BYTES = 256 * 1024
 SCHEMA_DIR = Path(__file__).resolve().parents[1] / "schema"
 _validators: dict[str, Draft202012Validator] = {}
 
@@ -80,6 +84,8 @@ class Kind:
     key: str
     record_kind: str
     schema: str | None = None
+    # MAX_RECORD_BYTES applies to this kind's record.json (see the constant).
+    limits_record_bytes: bool = False
 
     def assets_of(self, record: dict) -> list[dict]:
         return []
@@ -126,6 +132,7 @@ class SolarEclipseKind(Kind):
     key = "events/solar-eclipses"
     record_kind = "solar-eclipse"
     schema = "solar-eclipse.schema.json"
+    limits_record_bytes = True
 
     def check(self, entry: Entry, records: list[Entry], root: Path) -> list[Problem]:
         record, path, problems = entry.record, rel(root, entry.record_path), []
@@ -158,8 +165,8 @@ def _convention_repr(value):
 
 
 class BodiesKind(Kind):
-    """Bodies are the one kind shipped app builds read today, and those builds
-    reject the whole package when any body record fails to decode or to be
+    """Bodies are one of the kinds the app reads today, and it rejects the
+    whole bodies package when any body record fails to decode or to be
     admitted: one bad record removes every contributed body for every user.
     So every rule below mirrors a check in the app (Swift names cited beside
     each, all under ios/Overhead/ in the app repository), and a record that
@@ -168,6 +175,7 @@ class BodiesKind(Kind):
     key = "bodies"
     record_kind = "body"
     schema = "body.schema.json"
+    limits_record_bytes = True
 
     # The app's admission checks reject an orbit or rotation that does not use
     # exactly these conventions (CelestialCatalogue.validateOrbit,
@@ -210,16 +218,6 @@ class BodiesKind(Kind):
     # skipped by shipped builds.
     IMPLEMENTED = (set(ORBIT_CAPABILITY.values()) | set(ROTATION_CAPABILITY.values())
                    | set(PHOTOMETRY_CAPABILITY.values()) | LAYER_CAPABILITIES)
-
-    # Temporary shipped-build limits, bodies only. Current app builds fail the
-    # whole package past any of these; they are removed here when the app's
-    # content-kinds plan ships and lifts them in the app.
-    SHIPPED_MAX_MAJOR = 14                  # CatalogueLimits.maxMajorRecords (CelestialTree.maximumBodyCount 16 - Sun, Earth)
-    SHIPPED_MAX_RECORDS = 64                # ContentPackageFetcher.maximumRecords
-    SHIPPED_MAX_RECORD_BYTES = 256 * 1024   # CelestialContentLayout.maximumRecordBytes
-    SHIPPED_MAX_INDEX_BYTES = 64 * 1024     # CelestialContentLayout.maximumIndexBytes (the index every kind shares)
-    SHIPPED_MAX_ASSET_BYTES = 16 * 1024 * 1024    # DirectoryCelestialAssetProvider.maximumEncodedBytes
-    SHIPPED_MAX_PACKAGE_BYTES = 64 * 1024 * 1024  # ContentPackageFetcher.maximumPackageBytes (sum of body asset byteLimits)
 
     def assets_of(self, record: dict) -> list[dict]:
         assets = list(record.get("assets") or [])
@@ -402,44 +400,6 @@ class BodiesKind(Kind):
                 problems.append(Problem(rel(root, entry.record_path),
                                         f"parent {parent!r} must be sun, earth, or a body listed under bodies"))
         problems += self.tree_problems(admitted, root)
-
-        # Temporary shipped-build limits (see the constants above).
-        index_path = root / INDEX
-        if index_path.is_file() and index_path.stat().st_size > self.SHIPPED_MAX_INDEX_BYTES:
-            problems.append(Problem(rel(root, index_path),
-                                    f"is {index_path.stat().st_size} bytes; current app builds read at most "
-                                    f"{self.SHIPPED_MAX_INDEX_BYTES} and would drop every body"))
-        if len(majors) > self.SHIPPED_MAX_MAJOR:
-            problems.append(Problem(rel(root, index_path),
-                                    f"bodies lists {len(majors)} major bodies; current app builds admit at most "
-                                    f"{self.SHIPPED_MAX_MAJOR} and would drop every body"))
-        if len(entries) > self.SHIPPED_MAX_RECORDS:
-            problems.append(Problem(rel(root, index_path),
-                                    f"bodies lists {len(entries)} records; current app builds fetch at most "
-                                    f"{self.SHIPPED_MAX_RECORDS} and would drop every body"))
-        total = 0
-        for entry in entries:
-            size = entry.record_path.stat().st_size
-            if size > self.SHIPPED_MAX_RECORD_BYTES:
-                problems.append(Problem(rel(root, entry.record_path),
-                                        f"is {size} bytes; current app builds read at most "
-                                        f"{self.SHIPPED_MAX_RECORD_BYTES} and would drop every body"))
-            layer_assets = [id(a) for layer in entry.record.get("layers") or [] if isinstance(layer, dict)
-                            for a in layer.get("assets") or []]
-            for asset in self.assets_of(entry.record):
-                limit = asset.get("byteLimit")
-                if isinstance(limit, int) and not isinstance(limit, bool):
-                    total += limit
-                    # Record textures carry this cap in the schema (validateAssetDescriptor);
-                    # the fetcher applies it to layer assets too (ContentPackageFetcher.fill).
-                    if id(asset) in layer_assets and limit > self.SHIPPED_MAX_ASSET_BYTES:
-                        problems.append(Problem(rel(root, entry.record_path),
-                                                f"asset {asset.get('id')!r} is {limit} bytes; current app builds "
-                                                f"accept at most {self.SHIPPED_MAX_ASSET_BYTES} (16 MiB) per asset"))
-        if total > self.SHIPPED_MAX_PACKAGE_BYTES:
-            problems.append(Problem(rel(root, index_path),
-                                    f"body assets total {total} bytes; current app builds fetch at most "
-                                    f"{self.SHIPPED_MAX_PACKAGE_BYTES} (64 MiB) and would drop every body"))
         return problems
 
     def tree_problems(self, majors: list[Entry], root: Path) -> list[Problem]:
@@ -686,6 +646,16 @@ def check_identity(entry: Entry, root: Path) -> list[Problem]:
     return problems
 
 
+def check_record_bytes(entry: Entry, root: Path) -> list[Problem]:
+    """MAX_RECORD_BYTES: a standing app rule for the kinds the app fetches
+    directly, not a policy cap the app might later lift."""
+    size = entry.record_path.stat().st_size
+    if size > MAX_RECORD_BYTES:
+        return [Problem(rel(root, entry.record_path),
+                        f"is {size} bytes; the app reads at most {MAX_RECORD_BYTES} bytes of a record.json")]
+    return []
+
+
 def check_files(entry: Entry, root: Path) -> list[Problem]:
     kind = KINDS[entry.kind]
     problems = []
@@ -732,6 +702,8 @@ def validate(root: Path) -> list[Problem]:
         if kind.schema:
             problems += schema_problems(entry.record, kind.schema, rel(root, entry.record_path))
         problems += check_files(entry, root)
+        if kind.limits_record_bytes:
+            problems += check_record_bytes(entry, root)
         problems += kind.check(entry, by_kind[entry.kind], root)
     for key, kind in KINDS.items():
         problems += kind.check_kind(by_kind.get(key, []), root)

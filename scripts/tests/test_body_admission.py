@@ -76,10 +76,10 @@ class BodyAdmissionTests(unittest.TestCase):
         record["assets"][0].update(width=2000, height=1000)
         self.assertReported(self.found(record), "assets.0.width: 2000 is not one of")
 
-    def test_record_texture_over_16_mib_is_rejected(self):
+    def test_asset_byte_limit_of_20_mib_admits(self):
         record = major("ceres")
-        record["assets"][0]["byteLimit"] = 16 * 1024 * 1024 + 1
-        self.assertReported(self.found(record), "assets.0.byteLimit: 16777217 is greater than the maximum")
+        record["assets"][0]["byteLimit"] = 20 * 1024 * 1024
+        self.assertEqual(self.found(record), [])
 
     # I1: per-record admission
 
@@ -236,40 +236,17 @@ class BodyAdmissionTests(unittest.TestCase):
         found = self.found(major("ceres", asset_id="shared"))
         self.assertReported(found, "asset id 'shared' is already used by vesta")
 
-    # I2: temporary shipped-build limits
-
-    def test_fifteen_major_bodies_are_rejected(self):
-        for n in range(15):
-            write_entry(self.root, "bodies", f"body-{n}", major(f"body-{n}"), {"texture.jpg": FAKE_JPEG})
-        found = messages(validate.validate(self.root))
-        self.assertIn("content/index.json: bodies lists 15 major bodies; current app builds admit at most 14 "
-                      "and would drop every body", found)
-
-    def test_fourteen_major_bodies_admit(self):
-        for n in range(14):
-            write_entry(self.root, "bodies", f"body-{n}", major(f"body-{n}"), {"texture.jpg": FAKE_JPEG})
-        self.assertEqual(messages(validate.validate(self.root)), [])
-
-    def test_sixty_five_body_records_are_rejected(self):
-        for n in range(65):
-            write_entry(self.root, "bodies", f"body-{n}", body(f"body-{n}"))
-        found = messages(validate.validate(self.root))
-        self.assertIn("content/index.json: bodies lists 65 records; current app builds fetch at most 64 "
-                      "and would drop every body", found)
+    # I2: standing app rules, not policy caps
 
     def test_record_over_256_kb_is_rejected(self):
         record = body()
         record["provenance"]["accuracy"] = "x" * (256 * 1024)
-        self.assertReported(self.found(record), "current app builds read at most 262144")
+        self.assertReported(self.found(record), "the app reads at most 262144 bytes of a record.json")
 
-    def test_layer_asset_over_16_mib_is_rejected(self):
-        record = body()
-        record["capabilities"]["enhances"] = ["rings/1"]
-        record["layers"] = [{"type": "rings", "version": "1", "assets": [
-            {"id": "rings", "role": "profile", "path": "rings.png", "format": "png", "width": 2048, "height": 1,
-             "byteLimit": 16 * 1024 * 1024 + 1, "sha256": "0" * 64, "required": True}]}]
-        write_entry(self.root, "bodies", "ceres", record, {"rings.png": b"\x89PNG"})
-        self.assertReported(messages(validate.validate(self.root)), "asset 'rings' is 16777217 bytes")
+    def test_seventy_body_records_admit(self):
+        for n in range(70):
+            write_entry(self.root, "bodies", f"body-{n}", body(f"body-{n}"))
+        self.assertEqual(messages(validate.validate(self.root)), [])
 
     # I3: symlinks
 

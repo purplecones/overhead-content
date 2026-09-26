@@ -8,18 +8,11 @@ Current app builds read every body record and fail the whole package - every con
 `scripts/validate.py` mirrors those rules, so a body it accepts is one the app admits.
 JSON must be plain JSON: `NaN`, `Infinity` and numbers beyond the 64-bit float range are rejected.
 
-## Limits on current app builds
+## Limits
 
-Current app builds limit bodies, and `validate.py` enforces these limits until a later app release lifts them:
-
-| Limit | Value |
-| --- | --- |
-| Major bodies | at most 14 (16 slots less the Sun and Earth) |
-| Body records, major and minor | at most 64 |
-| One `record.json` | at most 256 KB |
-| `content/index.json`, all kinds together | at most 64 KB |
-| One asset | at most 16 MiB |
-| All body assets together | at most 64 MiB |
+The app reads at most 262144 bytes (256 KB) of a `record.json`.
+`validate.py` enforces this.
+There is no other count or size limit: no cap on the number of major or minor bodies, no cap on an asset's `byteLimit`, and no cap on `content/index.json`.
 
 ## Identity
 
@@ -188,8 +181,8 @@ Traversal (`..`), absolute paths and symlinks are rejected.
 `id` must be unique across every body, not just within its record.
 
 A texture in `assets` must be a JPEG: `format` `"jpeg"` and a `path` ending `.jpg` or `.jpeg`.
-Width and height must each be a power of two, the width at most 2048 and the height at most 1024, and the file at most 16 MiB.
-PNG and larger textures fail every body on current app builds, so downscale a larger source map to 2048 x 1024.
+Width and height must each be a power of two, the width at most 2048 and the height at most 1024.
+PNG and oversized textures fail every body, so downscale a larger source map to 2048 x 1024.
 
 `byteLimit` is the file's exact byte count and `sha256` its exact digest.
 Both are verified, so stamp them with the script rather than by hand.

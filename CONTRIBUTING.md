@@ -28,7 +28,7 @@ You still read the result, test it on your phone, and sign the pull request.
    [docs/schema.md](docs/schema.md) is the field reference.
 
 4. **Add your assets** into the same directory and declare them in the record's `assets` array.
-   A body texture is a JPEG, `texture.jpg`, 2048 x 1024 pixels or another power-of-two size no larger than that, at most 16 MiB.
+   A body texture is a JPEG, `texture.jpg`, 2048 x 1024 pixels or another power-of-two size no larger than that.
    Write the entry's `README.md`: sources, attribution and licence.
    Assets must be public domain, CC0, CC BY or CC BY-SA.
 
@@ -57,9 +57,6 @@ They cost more to draw, so make one only when you have the radii and a real text
 
 `minor` bodies are admitted into the catalogue but not drawn: the app has no minor-body rendering yet, only a reserved place for when it does.
 Add one only when the person accepts that it will not appear on screen yet.
-
-Current app builds accept at most 14 major bodies and 64 body records in all, and `validate.py` enforces those limits.
-They will lift in a later app release.
 
 Tier is a description of what the record supports, not a request.
 A record that declares `major` must supply what a major body needs - real radii and a texture - and is rejected if it does not.
