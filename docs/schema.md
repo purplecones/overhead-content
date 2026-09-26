@@ -29,7 +29,7 @@ Current app builds limit bodies, and `validate.py` enforces these limits until a
 | `id` | string | Must equal the directory name. Lowercase, hyphen-separated, permanent. |
 | `tier` | string | `"major"` or `"minor"`. |
 | `displayName` | string | What people read on screen. |
-| `parent` | string | The id this body orbits, for example `"sun"` or `"earth"`. A major body's parent is `sun`, `earth`, or another major body in the index, with no loops. |
+| `parent` | string | The id this body orbits, for example `"sun"` or `"earth"`. A major body's parent is `sun`, `earth`, or another major body in the index, with no loops. That parent must not require a capability current app builds lack, since they skip it. |
 
 The app cross-checks `kind` and `id` against the path and rejects a record that disagrees with where it lives.
 The ids `sun` and `earth` are reserved: the app draws those two itself.

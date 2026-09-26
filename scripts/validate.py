@@ -204,6 +204,12 @@ class BodiesKind(Kind):
                         "legacy-lunar-schlyter": "legacy-lunar-schlyter/1"}
     ROTATION_CAPABILITY = {"iau-linear": "iau-linear/1", "legacy-lunar-libration": "legacy-lunar-libration/1"}
     PHOTOMETRY_CAPABILITY = {"lunar": "lunar/1", "lambert": "lambert/1", "emissive": "emissive/1"}
+    # CelestialLayerRegistry.capabilities.
+    LAYER_CAPABILITIES = {"rings/1"}
+    # CelestialCapability.implemented: a record requiring anything else is
+    # skipped by shipped builds.
+    IMPLEMENTED = (set(ORBIT_CAPABILITY.values()) | set(ROTATION_CAPABILITY.values())
+                   | set(PHOTOMETRY_CAPABILITY.values()) | LAYER_CAPABILITIES)
 
     # Temporary shipped-build limits, bodies only. Current app builds fail the
     # whole package past any of these; they are removed here when the app's
@@ -344,12 +350,24 @@ class BodiesKind(Kind):
                 add(f"carries layer {capability!r} without listing it in capabilities.requires or enhances, "
                     "so the app skips the record")
 
+    def unimplemented(self, record: dict) -> str | None:
+        """The first capability a record requires that shipped builds lack."""
+        capabilities = record.get("capabilities")
+        requires = capabilities.get("requires") if isinstance(capabilities, dict) else None
+        if not isinstance(requires, list):
+            return None
+        return next((c for c in sorted(r for r in requires if isinstance(r, str)) if c not in self.IMPLEMENTED), None)
+
     def check_kind(self, entries: list[Entry], root: Path) -> list[Problem]:
         """Rules that span records: each is package-wide on shipped builds."""
         problems: list[Problem] = []
         by_id = {e.id: e for e in entries}
         majors = [e for e in entries if e.record.get("tier") == "major"]
-        major_ids = {e.id for e in majors}
+        # Shipped builds skip a major that requires an unimplemented capability,
+        # so it is no parent: a child of it fails CelestialTree with missingParent.
+        admitted = [e for e in majors if not self.unimplemented(e.record)]
+        major_ids = {e.id for e in admitted}
+        skipped = {e.id: self.unimplemented(e.record) for e in majors if self.unimplemented(e.record)}
 
         # CelestialCatalogue.resolveAssets: record asset ids are unique across the package.
         owners: dict[str, str] = {}
@@ -373,13 +391,17 @@ class BodiesKind(Kind):
             if not isinstance(parent, str):
                 continue
             if entry.record.get("tier") == "major":
-                if parent not in self.PROTECTED_IDS and parent not in major_ids:
+                if parent in skipped:
+                    problems.append(Problem(rel(root, entry.record_path),
+                                            f"parent {parent!r} requires {skipped[parent]!r}, which current app builds "
+                                            "do not implement; they skip the parent and would drop every body"))
+                elif parent not in self.PROTECTED_IDS and parent not in major_ids:
                     problems.append(Problem(rel(root, entry.record_path),
                                             f"parent {parent!r} must be sun, earth, or a major body listed under bodies"))
             elif parent not in self.PROTECTED_IDS and parent not in by_id:
                 problems.append(Problem(rel(root, entry.record_path),
                                         f"parent {parent!r} must be sun, earth, or a body listed under bodies"))
-        problems += self.tree_problems(majors, root)
+        problems += self.tree_problems(admitted, root)
 
         # Temporary shipped-build limits (see the constants above).
         index_path = root / INDEX
