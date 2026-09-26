@@ -52,7 +52,7 @@ The order of ids under `bodies` is the on-screen order; never sort that array.
 5. Write the entry's `README.md`: what it is, each source as a link, the licence, and the attribution the licence requires.
 6. Commit with a message such as `feat(bodies): add Ceres` and open a pull request using the template.
    For a body, tell the person how to test it on their phone before the review: open `overhead://content?source=https://github.com/<owner>/overhead-content/tree/<branch>` on the phone, or paste that GitHub URL under Options, Content.
-   The app release that reads events and craft from this repository has not shipped yet, so a phone preview currently shows bodies only; for events and craft, `validate.py` is the check until then.
+   The app reads bodies and events, so a phone preview shows both; the app release that reads craft from this repository has not shipped yet, so for craft `validate.py` is the check until then.
 
 One entry per pull request unless the entries only make sense together.
 
@@ -72,15 +72,15 @@ Minor-tier records, and a `legacy-lunar-schlyter` orbit for any parent but Earth
 - Rotation from NAIF `pck00011.tpc`, radii and GM from JPL or NSSDC fact sheets.
   Take all radii from one source.
 - Textures: NASA, USGS Astrogeology, or Solar System Scope (CC BY 4.0) are safe.
-  Equirectangular, 2:1, a JPEG named `texture.jpg` with `"format": "jpeg"`, 2048 x 1024 pixels (width and height must be powers of two, at most 2048 x 1024), at most 16 MiB.
-  Downscale a larger source map; the app rejects PNG textures and larger sizes.
+  Equirectangular, 2:1, a JPEG named `texture.jpg` with `"format": "jpeg"`, 2048 x 1024 pixels (width and height must be powers of two, at most 2048 x 1024).
+  Downscale a larger source map; the app rejects PNG textures and larger dimensions.
 - `appearance.absoluteMagnitude` is required for `lambert` and `lunar` photometry: the body's V(1,0), for example from its NSSDC fact sheet.
 - `presentation` is `sphere` only when the two radii are equal, otherwise `ellipsoid`.
 - `tier` is `major` when you have a texture; radii and rotation are required either way now, so texture is the only thing tier still depends on.
   Without a texture, use `minor`.
   A major body's `parent` must be `sun`, `earth`, or another major body in the index that requires only capabilities current app builds implement.
 - `provenance.accuracy` must state what the model omits and how large the error is.
-- Current app builds accept at most 14 major bodies and 64 body records, and fail every body at once when one body record breaks a rule.
+- The app fails every body at once when one body record breaks a rule.
   `validate.py` mirrors those rules, including the orbit and rotation evaluation at both validity endpoints, so treat any problem it reports on a body as blocking.
   It cannot judge whether the body looks right, so still ask the person to check it on their phone before merging.
 - Reference: `docs/schema.md`.

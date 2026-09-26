@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/purplecones/overhead-content/main/schema/body.schema.json",
   "title": "Body record",
-  "description": "content/bodies/<id>/record.json. Mirrors the required keys and per-model shapes of CelestialCatalogueRecord in the app's CelestialCatalogueRecords.swift, so a record that passes here decodes there. Bounds below mirror the app's admission (CelestialCatalogue.swift); the rules a schema cannot express (radii against presentation, validity windows, orbit and rotation evaluation, cross-record ids and parents, shipped-build limits) are in scripts/validate.py. docs/schema.md is the field reference.",
+  "description": "content/bodies/<id>/record.json. Mirrors the required keys and per-model shapes of CelestialCatalogueRecord in the app's CelestialCatalogueRecords.swift, so a record that passes here decodes there. Bounds below mirror the app's admission (CelestialCatalogue.swift); the rules a schema cannot express (radii against presentation, validity windows, orbit and rotation evaluation, cross-record ids and parents) are in scripts/validate.py. docs/schema.md is the field reference.",
   "type": "object",
   "required": ["kind", "id", "tier", "displayName", "parent", "capabilities", "equatorialRadiusM",
                "polarRadiusM", "gravitationalParameterM3S2", "orbit", "rotation", "appearance", "assets",
@@ -211,7 +211,7 @@
       }
     },
     "recordAsset": {
-      "description": "A texture in the record's own assets. CelestialCatalogue.validateAssetDescriptor runs on every one and a failure fails the whole package on shipped builds: a JPEG, format jpeg, path ending .jpg or .jpeg, width and height powers of two within 2048x1024 (CatalogueLimits.maxMapWidth, maxMapHeight), byteLimit within 16 MiB (CatalogueLimits.maxEncodedBytes).",
+      "description": "A texture in the record's own assets. CelestialCatalogue.validateAssetDescriptor runs on every one and a failure fails the whole package on shipped builds: a JPEG, format jpeg, path ending .jpg or .jpeg, width and height powers of two within 2048x1024 (CatalogueLimits.maxMapWidth, maxMapHeight).",
       "allOf": [
         { "$ref": "#/$defs/assetFields" },
         {
@@ -219,14 +219,13 @@
             "format": { "const": "jpeg" },
             "path": { "pattern": "\\.([Jj][Pp][Gg]|[Jj][Pp][Ee][Gg])$" },
             "width": { "enum": [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048] },
-            "height": { "enum": [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024] },
-            "byteLimit": { "maximum": 16777216 }
+            "height": { "enum": [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024] }
           }
         }
       ]
     },
     "layerAsset": {
-      "description": "Mirrors CelestialCatalogueLayerAsset (CelestialCatalogueRecords.swift ~102-122): unlike a record asset, role is non-optional, and format and dimensions come from the layer type's role (CelestialCatalogue.admitLayerAssets), where a failure drops the layer or skips the record rather than failing the package. Its 16 MiB byteLimit cap is a package-wide shipped-build limit checked in validate.py.",
+      "description": "Mirrors CelestialCatalogueLayerAsset (CelestialCatalogueRecords.swift ~102-122): unlike a record asset, role is non-optional, and format and dimensions come from the layer type's role (CelestialCatalogue.admitLayerAssets), where a failure drops the layer or skips the record rather than failing the package.",
       "allOf": [
         { "$ref": "#/$defs/assetFields" },
         { "required": ["role"], "properties": { "format": { "enum": ["jpeg", "png"] } } }

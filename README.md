@@ -25,13 +25,13 @@ AGENTS.md                          instructions for a coding agent making a cont
 
 `index.json` names the entries; a kind's key is its folder path, and each entry is a directory holding a `record.json`, a `README.md`, and the assets the record declares.
 The record filename is the same across every kind, so a new kind is a new folder, a new schema and a new validator rule rather than a change to the app.
-Current app builds limit bodies: at most 14 major bodies and 64 body records, each `record.json` at most 256 KB, each asset at most 16 MiB and 64 MiB of body assets in all, with `index.json` at most 64 KB.
-`scripts/validate.py` enforces these limits, and they will lift in a later app release.
+The app reads at most 262144 bytes (256 KB) of a record.json.
+`scripts/validate.py` enforces this.
 
 ## How the app reads it
 
 The app reads `index.json`, then `content/<kind>/<id>/record.json` for each entry the index lists, in the order the index lists them.
-Current app builds read only `bodies`; the other kinds reach the app in a later release.
+The app reads `bodies` and `events/solar-eclipses`; the other kinds reach the app in a later release.
 That order is load-bearing: it becomes the on-screen order of the bodies.
 Alphabetising the array silently reorders what people see.
 
@@ -42,14 +42,15 @@ That is what lets this repository move ahead of the app: a record that asks for 
 An unknown kind is ignored rather than treated as an error, for the same reason.
 
 A capability problem - a requirement the app does not implement, a model the record uses without listing it, or a layer that fails - is the only body defect current builds skip safely, by skipping that one record or dropping that one layer.
-Any other body defect - a record that does not decode, an out-of-range number, a texture of the wrong format or size, a limit exceeded - fails the whole package on current builds, so every contributed body disappears for everyone.
+Any other body defect - a record that does not decode, an out-of-range number, a texture of the wrong format or size - fails the whole package on current builds, so every contributed body disappears for everyone.
 That is why `scripts/validate.py` mirrors the app's body rules one for one, and why it must pass before a body is merged.
-The app release that reads events and craft is designed to fail safe per record: an eclipse record admitted only if the app's own calculation agrees with it, a craft model only if it parses.
+The app fails safe per record for events: an eclipse record is admitted only if the app's own calculation agrees with it.
+The app release that reads craft is designed to fail safe per record too: a craft model only if it parses.
 
 ## Testing your change before you open a pull request
 
 You do not need to build the app.
-Current app builds preview bodies only; the app release that reads events and craft from this repository has not shipped yet, so for those `scripts/validate.py` is the check until it does.
+The app previews bodies and events; the app release that reads craft from this repository has not shipped yet, so for craft `scripts/validate.py` is the check until it does.
 Fork this repository, push your branch, and point the app at it: paste your fork, branch or pull request URL under Options, Content, or open this link on the phone:
 
     overhead://content?source=https://github.com/<owner>/overhead-content/tree/<branch>

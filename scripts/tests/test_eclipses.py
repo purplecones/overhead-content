@@ -54,3 +54,12 @@ class EclipseTests(unittest.TestCase):
         self.assertLess(abs(validate.mean_new_moon_offset_days(greatest)), 1.0)
         off = datetime(2024, 4, 22, 0, 0, tzinfo=timezone.utc)
         self.assertGreater(abs(validate.mean_new_moon_offset_days(off)), 10.0)
+
+    def test_record_over_256_kb_is_rejected(self):
+        # The app reads a record.json for events/solar-eclipses too
+        # (CelestialContentLayout.maximumRecordBytes), so this is not a
+        # bodies-only rule.
+        huge = dict(ECLIPSE, provenance=dict(ECLIPSE["provenance"], attribution="x" * (256 * 1024)))
+        write_entry(self.root, "events/solar-eclipses", "2024-04-08", huge)
+        found = messages(validate.validate(self.root))
+        self.assertTrue(any("the app reads at most 262144 bytes of a record.json" in m for m in found), found)
