@@ -145,10 +145,33 @@ class SolarEclipseKind(Kind):
 register(SolarEclipseKind())
 
 
+def _convention_repr(value):
+    """2451545.0 reads as 2451545 in a message; strings keep their quotes."""
+    if isinstance(value, float) and value.is_integer():
+        return repr(int(value))
+    return repr(value)
+
+
 class BodiesKind(Kind):
     key = "bodies"
     record_kind = "body"
     schema = "body.schema.json"
+
+    # The app's admission checks reject an orbit that does not use exactly
+    # these conventions (CelestialCatalogue.validateOrbit); a schema cannot
+    # express "this field equals this value", so it is checked here.
+    KEPLER_ORBIT_CONVENTIONS = {
+        "epochJD": 2451545.0,
+        "frame": "ecliptic-j2000",
+        "distanceUnit": "au",
+        "angleUnit": "deg",
+        "timeConvention": "tt-as-utc",
+    }
+    LEGACY_LUNAR_ORBIT_CONVENTIONS = {
+        "epochJD": 2451545.0,
+        "frame": "earth-fixed",
+        "timeConvention": "tt-as-utc",
+    }
 
     def assets_of(self, record: dict) -> list[dict]:
         assets = list(record.get("assets") or [])
@@ -167,6 +190,19 @@ class BodiesKind(Kind):
         ]):
             problems.append(Problem(path, "a major body needs equatorialRadiusM, polarRadiusM, rotation, "
                                           "and appearance.textureID"))
+        orbit = record.get("orbit") or {}
+        model = orbit.get("model")
+        if model == "kepler-standish-table2a":
+            for field, expected in self.KEPLER_ORBIT_CONVENTIONS.items():
+                if orbit.get(field) != expected:
+                    problems.append(Problem(path, f"orbit.{field} must be {_convention_repr(expected)}"))
+        elif model == "legacy-lunar-schlyter":
+            for field, expected in self.LEGACY_LUNAR_ORBIT_CONVENTIONS.items():
+                if orbit.get(field) != expected:
+                    problems.append(Problem(path, f"orbit.{field} must be {_convention_repr(expected)}"))
+            if record.get("parent") != "earth":
+                problems.append(Problem(path, "legacy-lunar-schlyter only works for a body whose parent "
+                                              "is earth"))
         return problems
 
 

@@ -4,7 +4,9 @@
   "title": "Body record",
   "description": "content/bodies/<id>/record.json. Structure only; the app's admission checks numeric sanity, capability support, and asset digests. docs/schema.md is the field reference.",
   "type": "object",
-  "required": ["kind", "id", "tier", "displayName", "parent", "capabilities", "orbit", "assets", "provenance"],
+  "required": ["kind", "id", "tier", "displayName", "parent", "capabilities", "equatorialRadiusM",
+               "polarRadiusM", "gravitationalParameterM3S2", "orbit", "rotation", "appearance", "assets",
+               "provenance"],
   "properties": {
     "kind": { "const": "body" },
     "id": { "$ref": "#/$defs/id" },
