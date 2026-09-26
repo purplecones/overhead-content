@@ -1,0 +1,5 @@
+# Total solar eclipse (2035-09-02)
+
+Greatest eclipse 2035-09-02T01:55:25Z UTC, converted from the table's Terrestrial Dynamical Time using its Delta T.
+Source: <https://eclipse.gsfc.nasa.gov/SEcat5/SE2001-2100.html>.
+Eclipse predictions by Fred Espenak, NASA/GSFC.

@@ -1,0 +1,11 @@
+{
+  "greatest": "2035-09-02T01:55:25Z",
+  "id": "2035-09-02",
+  "kind": "solar-eclipse",
+  "provenance": {
+    "attribution": "Eclipse predictions by Fred Espenak, NASA/GSFC",
+    "source": "NASA Five Millennium Canon of Solar Eclipses, table SE2001-2100",
+    "url": "https://eclipse.gsfc.nasa.gov/SEcat5/SE2001-2100.html"
+  },
+  "type": "total"
+}

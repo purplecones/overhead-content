@@ -17,8 +17,10 @@ agent runs, so all three see the same verdict.
 from __future__ import annotations
 
 import json
+import math
 import sys
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 
 try:
@@ -89,9 +91,51 @@ def register(kind: Kind) -> Kind:
     return kind
 
 
+def julian_day(moment: datetime) -> float:
+    return moment.timestamp() / 86400.0 + 2440587.5
+
+
+def mean_new_moon_offset_days(greatest: datetime) -> float:
+    """Days from `greatest` to the nearest mean new moon (Meeus, Astronomical
+    Algorithms, chapter 49, mean phase only).
+
+    The true new moon differs from the mean by up to about 14 hours, so this is
+    a coarse check: it catches a wrong month or day, not a wrong hour. The app
+    performs the exact check at admission."""
+    jd = julian_day(greatest)
+    years = (jd - 2451545.0) / 365.25 + 2000.0
+    k = round((years - 2000.0) * 12.3685)
+    best = math.inf
+    for candidate in (k - 1, k, k + 1):
+        t = candidate / 1236.85
+        jde = 2451550.09766 + 29.530588861 * candidate + 0.00015437 * t * t
+        best = min(best, jd - jde, key=abs)
+    return best
+
+
 class SolarEclipseKind(Kind):
     key = "events/solar-eclipses"
     record_kind = "solar-eclipse"
+    schema = "solar-eclipse.schema.json"
+
+    def check(self, entry: Entry, records: list[Entry], root: Path) -> list[Problem]:
+        record, path, problems = entry.record, rel(root, entry.record_path), []
+        raw = record.get("greatest")
+        if not isinstance(raw, str):
+            return problems
+        try:
+            greatest = datetime.strptime(raw, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+        except ValueError:
+            problems.append(Problem(path, f"greatest {raw!r} is not a real UTC instant"))
+            return problems
+        date = greatest.strftime("%Y-%m-%d")
+        if record.get("id") != date:
+            problems.append(Problem(path, f"id must be the UTC date of greatest, {date}"))
+        offset = mean_new_moon_offset_days(greatest)
+        if abs(offset) > 1.0:
+            problems.append(Problem(path, f"greatest is {abs(offset):.1f} days from the nearest new moon; "
+                                          "a solar eclipse happens at new moon, so check the date"))
+        return problems
 
 
 register(SolarEclipseKind())

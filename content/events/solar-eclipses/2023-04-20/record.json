@@ -1,0 +1,13 @@
+{
+  "greatest": "2023-04-20T04:16:43Z",
+  "id": "2023-04-20",
+  "kind": "solar-eclipse",
+  "provenance": {
+    "attribution": "Eclipse predictions by Fred Espenak, NASA/GSFC",
+    "source": "NASA Five Millennium Canon of Solar Eclipses, table SE2001-2100",
+    "url": "https://eclipse.gsfc.nasa.gov/SEcat5/SE2001-2100.html"
+  },
+  "summary": "A rare hybrid, annular at its ends and total in the middle, seen as total from Exmouth in Western Australia.",
+  "title": "Ningaloo hybrid eclipse",
+  "type": "hybrid"
+}
