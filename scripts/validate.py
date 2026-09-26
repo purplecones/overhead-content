@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import json
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 RECORD = "record.json"
@@ -77,7 +77,7 @@ register(SolarEclipseKind())
 
 def rel(root: Path, path: Path) -> str:
     """Paths are printed relative to the repository root, where people run git."""
-    return str(path.relative_to(root))
+    return str(path.relative_to(root.parent))
 
 
 def load_json(path: Path, root: Path, problems: list[Problem]):
