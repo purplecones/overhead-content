@@ -11,6 +11,12 @@ If you cannot say who made a texture and under what licence, do not commit the t
 Public-domain government data (NASA, JPL, USGS, NAIF) and clearly licensed open sources are safe.
 An image found through a search engine is not, no matter where it ends up being hosted.
 
+## Working with a coding agent
+
+`AGENTS.md` is written for your agent.
+Point it at the repository and describe the entry; it follows the same steps below and runs the same checks.
+You still read the result, test it on your phone, and sign the pull request.
+
 ## Adding a body
 
 1. **Fork this repository** and create a branch.
@@ -25,8 +31,9 @@ An image found through a search engine is not, no matter where it ends up being 
    Write the entry's `README.md`: sources, attribution and licence.
    Assets must be public domain, CC0, CC BY or CC BY-SA.
 
-5. **Stamp the asset metadata.** Do not fill in `sha256`, `byteLimit`, `width` or `height` by hand - they must match the bytes exactly or the app rejects the asset.
-   Run `python3 scripts/stamp.py content`, then `python3 scripts/stamp.py --check content` to confirm.
+5. **Stamp and validate.** Do not fill in `sha256`, `byteLimit`, `width` or `height` by hand.
+   Run `python3 scripts/stamp.py content`, then `python3 scripts/validate.py content`, and fix everything it prints.
+   Continuous integration runs the same two commands on your pull request.
 
 6. **Test it in the app** by pointing Overhead at your fork or branch. See the README.
 
@@ -44,7 +51,7 @@ An image found through a search engine is not, no matter where it ends up being 
 ## Tiers
 
 `major` bodies are fully modelled: they get a frame slot, a texture and their own rendering.
-They are expensive, and the number of them is capped.
+They cost more to draw, so make one only when you have the radii and a real texture.
 
 `minor` bodies are drawn as batched points.
 They cost almost nothing, so there can be very many of them.
@@ -66,6 +73,20 @@ Use it for anything optional, so your record still draws on older builds.
 
 Do not invent capability names.
 The app implements a fixed set, and a record requiring an unimplemented one is skipped everywhere until the app gains it.
+
+## Adding a solar eclipse
+
+Run `python3 scripts/eclipses/from-nasa-canon.py content --from <year> --to <year>` rather than writing a record.
+To name an eclipse, add its date to `TITLES` in that script and rerun it.
+[docs/events.md](docs/events.md) is the field reference.
+
+## Adding a craft model
+
+1. Export a `.glb` with Y up and the nose or bow along -Z, positions and normals only, colours in the material.
+2. Create `content/craft/<domain>/<id>/` with `model.glb`, a `record.json` copied from `craft/aircraft/peregrine`, and a `README.md` naming the author, the source URL and the licence.
+3. Set `dimensions` to the real vehicle's length and span in metres, and `matches` to the classes or types it stands for.
+4. Add `<id>` to `content/index.json` under `craft/<domain>`, then stamp and validate.
+[docs/craft.md](docs/craft.md) is the field reference, including the class ids for each domain and the licences accepted.
 
 ## Adding a transit feed
 

@@ -10,18 +10,22 @@ The app fetches the latest release of this repository, so merged content reaches
 
 ```
 content/
-  index.json            what entries exist, per kind
-  bodies/
-    mars/
-      record.json       the body: orbit, rotation, size, appearance, provenance
-      texture.jpg       the surface map the record declares
-      README.md         the entry's sources, attribution and licence
+  index.json                       what entries exist, per kind, in display order
+  bodies/<id>/                     planets, moons and asteroids: record.json, texture.jpg, README.md
+  events/solar-eclipses/<id>/      the eclipses the app lists: record.json, README.md
+  craft/<domain>/<id>/             3D models for aircraft, vessels, satellites and transit: record.json, model.glb, README.md
+  transit-feeds/<id>/              live transit feeds the backend ingests: record.json, README.md
+schema/                            one JSON Schema per kind
 scripts/
-  stamp.py              writes asset digests, sizes and dimensions into records
+  validate.py                      checks the whole tree; what CI and reviewers run
+  stamp.py                         writes asset digests and sizes into records
+  eclipses/from-nasa-canon.py      generates eclipse records from NASA's table
+AGENTS.md                          instructions for a coding agent making a contribution
 ```
 
-`index.json` names the entries; each entry is a directory holding a `record.json` and whatever assets that record declares.
-The record filename is the same across every kind, so a future kind is a new schema and a new validator rather than a change to the app's resolver.
+`index.json` names the entries; a kind's key is its folder path, and each entry is a directory holding a `record.json`, a `README.md`, and the assets the record declares.
+The record filename is the same across every kind, so a new kind is a new folder, a new schema and a new validator rule rather than a change to the app.
+There is no limit on how many entries a kind holds; review is the limit.
 
 ## How the app reads it
 
@@ -35,6 +39,9 @@ That is what lets this repository move ahead of the app: a record that asks for 
 
 An unknown kind is ignored rather than treated as an error, for the same reason.
 
+Every kind fails safe on its own terms.
+An eclipse record is admitted only if the app's own calculation agrees with it; a craft model only if it parses; a body only if the app implements what it requires.
+
 ## Testing your change before you open a pull request
 
 You do not need to build the app.
@@ -47,6 +54,15 @@ Tap "Return to official content" when you are done; updating the app does this t
 Check that your body appears, is the right size relative to its neighbours, sits where it should in its orbit, and that its texture is oriented correctly.
 
 Then open the pull request.
+
+## Contributing with a coding agent
+
+Clone your fork, open it in Claude Code, Codex, Cursor or any agent that reads `AGENTS.md`, and ask for what you want:
+
+    Add Jupiter's moon Europa as a minor body, with sources.
+
+The agent finds the procedure, the field references and the two commands to run in `AGENTS.md`, and stops when `scripts/validate.py` is clean.
+Check the result on your phone, then open the pull request it prepared.
 
 ## Contributing
 
